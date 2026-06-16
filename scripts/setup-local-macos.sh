@@ -187,11 +187,11 @@ fi' "~/.zshrc に ~/.zshrc.d/ の読み込み設定を追加しました"
   if [ -d "$repo_root/dotfiles" ]; then
     echo ""
     echo "🏠 chezmoi で推奨設定を適用中..."
-    if _is_non_interactive; then
-      _mise_at_home exec chezmoi -- chezmoi apply --force --source "$repo_root/dotfiles"
-    else
-      _mise_at_home exec chezmoi -- chezmoi apply --interactive --source "$repo_root/dotfiles"
-    fi
+    # chezmoi apply は対話/非対話を問わず常に --force（非対話）で実行する。
+    # `--interactive` の per-file prompt（`Apply <file>?`）が curl|bash ユーザーの
+    # 停止トラップになっていたため。詳細は Linux 側 scripts/lib/install-dev.sh の
+    # 同ブロックのコメントと ADR-0003 を参照。
+    _mise_at_home exec chezmoi -- chezmoi apply --force --source "$repo_root/dotfiles"
     echo "  ✅ chezmoi による設定適用完了"
 
     # chezmoi apply で書き出された ~/.config/mise/config.toml に宣言されているが

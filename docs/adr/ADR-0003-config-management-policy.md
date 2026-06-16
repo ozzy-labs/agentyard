@@ -14,7 +14,17 @@ OzzyLabs 推奨のドットファイル設定をユーザー環境に適用す�
 
 - **chezmoi**: テンプレートベースの設定管理。
 - **Auto (-y)**: 質問なしで推奨設定を適用（CI や新規構築用）。
-- **Interactive**: 各項目の適用をユーザーに確認（既存環境用）。
+- **Interactive**: インストール対象カテゴリの選択をユーザーに確認（既存環境用）。
+
+### chezmoi apply は常に非対話（`--force`）で実行する
+
+> 改訂（2026-06-16）: 当初は Interactive モードで `chezmoi apply --interactive`（適用ファイルごとに `Apply <file>?` と確認）を使っていたが、これを廃し **モードを問わず常に `chezmoi apply --force`** とする。
+
+- **理由**: `--interactive` の per-file prompt は、`curl … | bash` でカテゴリ選択を `y` で進めたユーザーにとって、スクリプト本体の `[Y/n]` プロンプトとは異なる見慣れない UI として現れ、「ハングした」と誤認させる UX トラップになっていた（インストーラがそこで停止したように見える）。
+- 「Interactive モード」は引き続き有効だが、その対話性が支配するのは **インストール対象カテゴリの選択プロンプト**（`scripts/lib/prompts.sh` の `_prompt_*`）であり、`chezmoi apply` ステップ自体は対象外とする。
+- **安全性の担保**: インストーラのこのステップに到達した時点で「推奨 dotfiles を適用する」意思は確認済みとみなせる。既存の `.zshrc` 等は `~/.zshrc.d/` 機構（下記「影響」）で破壊されない。適用後の差分は `./install.sh doctor`（`check_chezmoi_drift`）で随時確認・再適用できる。
+- 個別レビューしながら適用したい上級者は、セットアップ後に手動で `chezmoi apply --interactive --source <dotfiles>` を実行すればよい。
+- 実装: `scripts/lib/install-dev.sh`（Linux）/ `scripts/setup-local-macos.sh`（macOS）の両 `install_dev_tools`。
 
 ## 理由
 

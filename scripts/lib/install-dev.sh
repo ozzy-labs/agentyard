@@ -43,13 +43,17 @@ fi' "~/.zshrc に ~/.zshrc.d/ の読み込み設定を追加しました"
   if [ -d "$repo_root/dotfiles" ]; then
     echo ""
     echo "🏠 chezmoi で推奨設定を適用中..."
-    # --force: 既存ファイルを上書き（chezmoi は内部でバックアップを保持する）
-    # --source: リポジトリ内の dotfiles ディレクトリを指定
-    if _is_non_interactive; then
-      _mise_at_home exec chezmoi -- chezmoi apply --force --source "$repo_root/dotfiles"
-    else
-      _mise_at_home exec chezmoi -- chezmoi apply --interactive --source "$repo_root/dotfiles"
-    fi
+    # chezmoi apply は対話モード/非対話モードを問わず常に --force（非対話）で実行する。
+    # 以前は interactive モードで `--interactive` を使っていたが、これは適用ファイル
+    # ごとに `Apply <file>?` と尋ねるため、curl|bash でカテゴリ選択を y で進めた
+    # ユーザーが見慣れない prompt を「ハング」と誤認して停止する UX トラップになって
+    # いた。インストーラのこのステップに到達した時点で「推奨 dotfiles を適用する」
+    # 意思は確認済みとみなせること、既存 shell 設定は ~/.zshrc.d/ 機構で保護済みで
+    # あること、適用後の差分は `./install.sh doctor`（check_chezmoi_drift）で確認可能
+    # であることから、chezmoi apply 自体は常に非対話とする。ADR-0003 参照。
+    # （スクリプトのカテゴリ選択プロンプトの対話性は従来どおり維持される）
+    # --force: 既存ファイルを上書き / --source: リポジトリ内 dotfiles を指定
+    _mise_at_home exec chezmoi -- chezmoi apply --force --source "$repo_root/dotfiles"
     echo "  ✅ chezmoi による設定適用完了"
 
     # chezmoi apply で書き出された ~/.config/mise/config.toml に宣言されているが

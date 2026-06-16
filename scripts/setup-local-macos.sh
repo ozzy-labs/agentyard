@@ -29,6 +29,7 @@ INSTALL_AI_POWER_TOOLS="${INSTALL_AI_POWER_TOOLS:-1}" # ast-grep, yq, markitdown
 INSTALL_DEV_TOOLS="${INSTALL_DEV_TOOLS:-1}"           # just, zoxide, shellcheck, chezmoi
 INSTALL_TMUX="${INSTALL_TMUX:-0}"                     # tmux（macOS では自動化対象外、READMEの手動案内のみ）
 INSTALL_ZELLIJ="${INSTALL_ZELLIJ:-0}"                 # Zellij（opt-in、mise 経由）
+INSTALL_BUN="${INSTALL_BUN:-0}"                       # Bun（opt-in、mise 経由、JS ランタイム/パッケージマネージャ）
 
 # スクリプトのディレクトリ
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -133,6 +134,25 @@ install_multiplexer_tools() {
   mise_use_global "zellij@0.44.3" "Zellij"
 }
 
+# Bun（opt-in、JS ランタイム / パッケージマネージャ / バンドラ、mise 経由）
+# Bun-native な MCP サーバ等（bun:sqlite を使うアプリは npx/Node では動かない）を
+# ホスト直で動かすための opt-in ランタイム（既定 OFF、INSTALL_BUN=1 で有効化）。
+# bun は mise core backend 扱いのため node / python と同じレンジ指定でピンする。
+#
+# 重要（呼び出し順序の制約）: 本関数は install_dev_tools の `chezmoi apply` より
+# 後に呼ぶこと。bun は真の opt-in であり global mise config テンプレートには
+# 意図的に列挙しないため、apply 前に登録すると上書きで消える（Linux 側
+# scripts/lib/install-languages.sh の install_bun ヘッダと同じ理由）。
+install_bun() {
+  [ "${INSTALL_BUN:-0}" != "1" ] && return
+
+  ensure_mise_installed || return 1
+
+  echo ""
+  echo "🍞 Bun を mise でインストール中..."
+  mise_use_global "bun@1" "Bun"
+}
+
 # 開発補助ツール: just / zoxide / shellcheck / chezmoi（mise）
 install_dev_tools() {
   [ "$INSTALL_DEV_TOOLS" != "1" ] && return
@@ -230,6 +250,9 @@ install_git_security_tools
 install_ai_power_tools
 install_multiplexer_tools
 install_dev_tools
+# Bun (opt-in) は install_dev_tools の `chezmoi apply` 後に登録する（global mise
+# config テンプレート非掲載の真の opt-in のため、apply 前だと wipe される）。
+install_bun
 
 # ========================================
 # セットアップ完了サマリー
@@ -245,6 +268,7 @@ echo ""
 echo "📦 言語ランタイム:"
 echo "  Node.js:        $(_mise_at_home exec node@lts -- node --version 2>/dev/null || echo '未インストール')"
 echo "  pnpm:           $(_mise_at_home exec pnpm -- pnpm --version 2>/dev/null || echo '未インストール')"
+echo "  Bun:            $(_mise_at_home exec bun -- bun --version 2>/dev/null || echo '未インストール (opt-in)')"
 echo "  Python:         $(_mise_at_home exec python -- python3 --version 2>/dev/null || echo '未インストール')"
 echo "  uv:             $(_mise_at_home exec uv -- uv --version 2>/dev/null | head -n1 || echo '未インストール')"
 echo ""

@@ -40,6 +40,31 @@ install_mise_and_languages() {
   echo "✅ mise + 言語環境インストール完了"
 }
 
+# 4b. Bun（opt-in）のインストール
+# Bun-native な MCP サーバ等（bun:sqlite を使うアプリは npx/Node では動かない）を
+# ホスト直で動かすための opt-in ランタイム / パッケージマネージャ / バンドラ。
+# 既定 OFF（INSTALL_BUN=1 で有効化）。Node + pnpm の代替ではなく追加の選択肢。
+#
+# バージョン方針: bun は mise の core backend 扱いのため、node / python と同じ
+# レンジ指定の例外に乗る（aqua レジストリ追従ずれ・具体パッチ版ピンの対象外）。
+#
+# 重要（呼び出し順序の制約）: 本関数は install_dev_tools の `chezmoi apply` より
+# 後に呼ぶこと。bun は真の opt-in であり global mise config テンプレート
+# (dotfiles/dot_config/mise/config.toml) には**意図的に列挙しない**（列挙すると
+# 末尾の `mise install` で全ホストに入り opt-in でなくなる）。一方 chezmoi apply は
+# global config を上書きするため、apply より前に `mise use --global` すると bun の
+# 登録が消える（ADR-0003 / #153・#156 と同じ罠）。apply 後に登録することで回避する。
+install_bun() {
+  [ "${INSTALL_BUN:-0}" != "1" ] && return
+
+  ensure_mise_installed || return 1
+
+  echo ""
+  echo "🍞 Bun を mise でインストール中..."
+  mise_use_global "bun@1" "Bun"
+  echo "✅ Bun インストール完了"
+}
+
 # 5. Git セキュリティツール（gitleaks）のインストール
 # git-secrets（メンテ停滞）の後継として gitleaks を mise 経由で導入
 install_git_security_tools() {

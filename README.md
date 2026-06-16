@@ -59,7 +59,7 @@ agentyard/
 - 🤖 **AI Agent CLIs** - Claude Code, Codex CLI, GitHub Copilot CLI, Gemini CLI (choose individually)
 - 🧠 **AI Power Tools** - markitdown (PDF/Office → Markdown), tesseract-ocr (+jpn), ffmpeg, ast-grep (structural code search), yq
 - 🐳 **Container / Sandbox Foundation** - Docker Engine + Docker Compose (essential for Dev Containers) + bubblewrap
-- ⚡ **Unified Version Manager** - mise manages Node.js LTS / pnpm / Python / uv / gitleaks / shellcheck / ast-grep / yq
+- ⚡ **Unified Version Manager** - mise manages Node.js LTS / pnpm / Python / uv / gitleaks / shellcheck / ast-grep / yq (opt-in: Bun for Bun-native tooling)
 - 🐍 **Python Ecosystem** - mise-managed Python + uv for packages/venvs/CLI tools
 - ☁️ **Cloud CLIs** - AWS CLI v2 (default) / Azure CLI, Google Cloud CLI (opt-in)
 - 🔒 **Modern Secret / Vulnerability Scanning** - gitleaks (2026 de-facto secret scanner) + trivy (filesystem vuln scanner, used by this repo's lefthook pre-commit); pair with lefthook per project
@@ -181,6 +181,7 @@ Each flag accepts `1` (install) or `0` (skip). Defaults shown match `scripts/set
 | `INSTALL_GIT_TOOLS` | `1` | Git, GitHub CLI, gitleaks |
 | `INSTALL_NODE` | `1` | mise + Node.js LTS + pnpm |
 | `INSTALL_PYTHON` | `1` | mise + Python + uv |
+| `INSTALL_BUN` | `0` | Bun (mise, opt-in) — JS runtime / package manager / bundler |
 | `INSTALL_CONTAINER` | `1` | Docker Engine, Docker Compose, bubblewrap |
 | `INSTALL_AWS_CLI` | `1` | AWS CLI v2 |
 | `INSTALL_AZURE_CLI` | `0` | Azure CLI (opt-in) |
@@ -206,6 +207,7 @@ macOS is intentionally lighter — Docker Desktop / AI agent CLIs / cloud CLIs a
 | `INSTALL_DEV_TOOLS` | `1` | just, zoxide, shellcheck, chezmoi |
 | `INSTALL_TMUX` | `0` | macOS prints a notice only — install via `brew install tmux` |
 | `INSTALL_ZELLIJ` | `0` | Zellij (via mise, opt-in) |
+| `INSTALL_BUN` | `0` | Bun (via mise, opt-in) — JS runtime / package manager / bundler |
 
 Example — non-interactive Linux install with Azure CLI added and AI agent CLIs skipped:
 
@@ -353,6 +355,7 @@ You can run it either through `install.sh` or directly via `scripts/setup-local-
 4. **Node.js Ecosystem (via mise)**
    - **Node.js LTS** - JavaScript runtime
    - **pnpm** - Fast package manager
+   - **Bun** (via mise, opt-in) - All-in-one JS runtime / package manager / bundler (set `INSTALL_BUN=1` or select interactively). Needed for Bun-native tools such as MCP servers that use `bun:sqlite` and won't run on Node/`npx`. An *additional* choice, not a replacement for Node + pnpm; pinned to the `bun@1` major (mise core backend, same range policy as Node/Python). Genuinely opt-in: it is intentionally **not** listed in the global mise config template, so default hosts stay Bun-free.
 5. **Python Ecosystem (via mise)**
    - **Python** - Latest stable via mise
    - **uv** - Packaging, virtualenvs, and CLI tool installer
@@ -612,6 +615,7 @@ macOS counterpart to `setup-local-linux.sh`, intentionally lighter-weight: focus
 - **markitdown[all]** (via `uv tool install`)
 - **just / zoxide / shellcheck / chezmoi** (via mise) — dev helpers (chezmoi applies `dotfiles/` templates per ADR-0003)
 - **zellij** (via mise) — terminal multiplexer (opt-in; set `INSTALL_ZELLIJ=1`)
+- **Bun** (via mise) — JS runtime / package manager / bundler (opt-in; set `INSTALL_BUN=1`). Registered after the chezmoi apply since it is intentionally not in the global mise config template (see ADR-0002)
 
 **6.3.2 What Is NOT Installed (manual on macOS)**
 

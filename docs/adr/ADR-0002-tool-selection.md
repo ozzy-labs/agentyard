@@ -86,3 +86,4 @@
 - **ADR-0001** 全体アーキテクチャ（Bash ベース） — ツール選定の前提となる依存最小化方針
 - **ADR-0003** 設定管理方針（chezmoi, Auto/Interactive モード） — `chezmoi apply` による global mise config 上書きの設計トラップ
 - **ADR-0005** Terminal multiplexer 採用方針と macOS mise-first 再確認 — multiplexer のピンと配布形態
+- **ADR-0006** インストール手段選定ポリシー — 本 ADR のバックエンド/ピン運用を参照する手段選定の決定木

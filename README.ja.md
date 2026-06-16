@@ -615,6 +615,7 @@ SETUP_LOG=/tmp/setup.log ./install.sh local
 - **markitdown[all]**（`uv tool install` 経由）
 - **just / zoxide / shellcheck / chezmoi**（mise 経由）— 開発補助（chezmoi は `dotfiles/` テンプレートを適用、ADR-0003 準拠）
 - **zellij**（mise 経由）— ターミナルマルチプレクサ（opt-in。`INSTALL_ZELLIJ=1` を設定）
+- **Bun**（mise 経由）— JS ランタイム / パッケージマネージャ / バンドラ（opt-in。`INSTALL_BUN=1` を設定）。global mise config テンプレートに意図的に列挙しないため chezmoi apply の後に登録する（ADR-0002 参照）
 
 **6.3.2 自動化対象外（macOS では手動）**
 

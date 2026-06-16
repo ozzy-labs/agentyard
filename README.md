@@ -615,6 +615,7 @@ macOS counterpart to `setup-local-linux.sh`, intentionally lighter-weight: focus
 - **markitdown[all]** (via `uv tool install`)
 - **just / zoxide / shellcheck / chezmoi** (via mise) — dev helpers (chezmoi applies `dotfiles/` templates per ADR-0003)
 - **zellij** (via mise) — terminal multiplexer (opt-in; set `INSTALL_ZELLIJ=1`)
+- **Bun** (via mise) — JS runtime / package manager / bundler (opt-in; set `INSTALL_BUN=1`). Registered after the chezmoi apply since it is intentionally not in the global mise config template (see ADR-0002)
 
 **6.3.2 What Is NOT Installed (manual on macOS)**
 

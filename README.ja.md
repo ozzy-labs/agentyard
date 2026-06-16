@@ -59,7 +59,7 @@ agentyard/
 - 🤖 **AI エージェント CLI** - Claude Code / Codex CLI / GitHub Copilot CLI / Gemini CLI（個別選択可）
 - 🧠 **AI パワーツール** - markitdown（PDF/Office → Markdown）/ tesseract-ocr(+jpn) / ffmpeg / ast-grep（構造的コード検索）/ yq
 - 🐳 **コンテナ / サンドボックス基盤** - Docker Engine + Docker Compose（Dev Container の前提）+ bubblewrap
-- ⚡ **統一バージョン管理** - mise で Node.js LTS / pnpm / Python / uv / gitleaks / shellcheck / ast-grep / yq を一元管理
+- ⚡ **統一バージョン管理** - mise で Node.js LTS / pnpm / Python / uv / gitleaks / shellcheck / ast-grep / yq を一元管理（opt-in: Bun-native ツール向けに Bun）
 - 🐍 **Python エコシステム** - mise 管理の Python + uv（パッケージ・venv・CLI ツール）
 - ☁️ **クラウド CLI** - AWS CLI v2（デフォルト ON）/ Azure CLI, Google Cloud CLI（opt-in）
 - 🔒 **モダンなシークレット / 脆弱性スキャン** - gitleaks（2026 デファクト シークレットスキャナ）+ trivy（ファイルシステム脆弱性スキャナ。本リポの lefthook pre-commit で利用）を mise で導入、プロジェクト側の lefthook と連携
@@ -181,6 +181,7 @@ cd agentyard
 | `INSTALL_GIT_TOOLS` | `1` | Git, GitHub CLI, gitleaks |
 | `INSTALL_NODE` | `1` | mise + Node.js LTS + pnpm |
 | `INSTALL_PYTHON` | `1` | mise + Python + uv |
+| `INSTALL_BUN` | `0` | Bun（mise、opt-in）— JS ランタイム / パッケージマネージャ / バンドラ |
 | `INSTALL_CONTAINER` | `1` | Docker Engine, Docker Compose, bubblewrap |
 | `INSTALL_AWS_CLI` | `1` | AWS CLI v2 |
 | `INSTALL_AZURE_CLI` | `0` | Azure CLI（opt-in） |
@@ -206,6 +207,7 @@ macOS 版は意図的に軽量化されている — Docker Desktop / AI エー�
 | `INSTALL_DEV_TOOLS` | `1` | just, zoxide, shellcheck, chezmoi |
 | `INSTALL_TMUX` | `0` | macOS では notice のみ表示。必要なら `brew install tmux` |
 | `INSTALL_ZELLIJ` | `0` | Zellij（mise 経由、opt-in） |
+| `INSTALL_BUN` | `0` | Bun（mise 経由、opt-in）— JS ランタイム / パッケージマネージャ / バンドラ |
 
 例 — Linux で非対話・Azure CLI 追加・AI エージェント CLI を全部スキップ:
 
@@ -353,6 +355,7 @@ Ubuntu/Debian 環境（WSL2 + 非 WSL Linux：Ubuntu Server / EC2 / GCE / コン
 4. **Node.js エコシステム（mise 経由）**
    - **Node.js LTS** - JavaScript ランタイム
    - **pnpm** - 高速なパッケージマネージャー
+   - **Bun**（mise 経由、opt-in）- オールインワンの JS ランタイム / パッケージマネージャ / バンドラ（`INSTALL_BUN=1` または対話セレクタで選択）。`bun:sqlite` を使う MCP サーバ等、Node/`npx` では動かない Bun-native ツールを動かすために必要。Node + pnpm の置き換えではなく**追加**の選択肢で、`bun@1` メジャーにピン（mise core backend、Node/Python と同じレンジ運用）。global mise config テンプレートには**意図的に列挙しない**真の opt-in のため、既定ホストには入らない。
 5. **Python エコシステム（mise 経由）**
    - **Python** - mise 管理の最新安定版
    - **uv** - パッケージ・仮想環境・CLI ツール導入

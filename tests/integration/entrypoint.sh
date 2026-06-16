@@ -142,23 +142,25 @@ fi
 echo "✅ setup-zsh-linux.sh completes under pipe execution"
 
 printf '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
-printf '🔵 3rd run — opt-in multiplexer (INSTALL_TMUX=1 INSTALL_ZELLIJ=1)\n'
+printf '🔵 3rd run — opt-in tools (INSTALL_TMUX=1 INSTALL_ZELLIJ=1 INSTALL_BUN=1)\n'
 printf '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
 
-# multiplexer は opt-in なので、既定の 1st / 2nd run では入らない。
-# 3rd run で INSTALL_TMUX=1 / INSTALL_ZELLIJ=1 を明示して両方がインストールされ、
-# assert-tools.sh が opt-in アサーションを満たすことを確認する。
-# tmux 側は ~/.tmux.conf の新規作成（既存ファイル無し時）も検証する。
-if ! INSTALL_TMUX=1 INSTALL_ZELLIJ=1 /workspace/install.sh local 2>&1 | tee "$RUN3_LOG"; then
-  echo "❌ 3rd run (INSTALL_TMUX=1 INSTALL_ZELLIJ=1) failed"
+# multiplexer / Bun は opt-in なので、既定の 1st / 2nd run では入らない。
+# 3rd run で INSTALL_TMUX=1 / INSTALL_ZELLIJ=1 / INSTALL_BUN=1 を明示して
+# すべてインストールされ、assert-tools.sh が opt-in アサーションを満たすことを
+# 確認する。tmux 側は ~/.tmux.conf の新規作成（既存ファイル無し時）も検証する。
+# Bun は global mise config テンプレート非掲載の真の opt-in のため、install_bun が
+# install_dev_tools の chezmoi apply 後に登録され wipe されないことの回帰検知も兼ねる。
+if ! INSTALL_TMUX=1 INSTALL_ZELLIJ=1 INSTALL_BUN=1 /workspace/install.sh local 2>&1 | tee "$RUN3_LOG"; then
+  echo "❌ 3rd run (INSTALL_TMUX=1 INSTALL_ZELLIJ=1 INSTALL_BUN=1) failed"
   exit 1
 fi
 assert_no_fatal_errors "$RUN3_LOG" "3rd run"
 
 # shellcheck disable=SC1091
 source "$HOME/.bashrc" || true
-if ! INSTALL_TMUX=1 INSTALL_ZELLIJ=1 bash "$ASSERT_SCRIPT"; then
-  echo "❌ Tool assertions failed after 3rd run (INSTALL_TMUX=1 INSTALL_ZELLIJ=1)"
+if ! INSTALL_TMUX=1 INSTALL_ZELLIJ=1 INSTALL_BUN=1 bash "$ASSERT_SCRIPT"; then
+  echo "❌ Tool assertions failed after 3rd run (INSTALL_TMUX=1 INSTALL_ZELLIJ=1 INSTALL_BUN=1)"
   exit 1
 fi
 

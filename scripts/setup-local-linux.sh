@@ -30,6 +30,7 @@ INSTALL_GIT_TOOLS="${INSTALL_GIT_TOOLS:-1}"     # Git, GitHub CLI, gitleaks
 # プログラミング言語環境（mise で統一管理）
 INSTALL_NODE="${INSTALL_NODE:-1}"     # mise + Node.js LTS + pnpm
 INSTALL_PYTHON="${INSTALL_PYTHON:-1}" # mise + Python + uv
+INSTALL_BUN="${INSTALL_BUN:-0}"       # mise + Bun（opt-in、JS ランタイム/パッケージマネージャ）
 
 # コンテナ / サンドボックスツール
 INSTALL_CONTAINER="${INSTALL_CONTAINER:-1}" # Docker, Docker Compose, bubblewrap
@@ -161,6 +162,7 @@ echo "  🔧 ビルドツール - build-essential"
 echo "  🔧 Git関連ツール - Git, GitHub CLI, gitleaks"
 echo "  📦 Node.js環境 - mise, Node.js LTS, pnpm"
 echo "  🐍 Python環境 - mise, Python, uv"
+echo "  🍞 Bun (opt-in) - mise, Bun ランタイム / パッケージマネージャ"
 echo "  🐳 コンテナ / サンドボックスツール - Docker Engine, Docker Compose, bubblewrap"
 echo "  ☁️ クラウドツール - AWS CLI (default) / Azure CLI, Google Cloud CLI (opt-in)"
 echo "  🪟 Terminal multiplexer - tmux / zellij (opt-in)"
@@ -208,6 +210,10 @@ if [[ ! $INSTALL_ALL =~ ^[Yy]?$ ]]; then
   _prompt_default_yes "🐍 Python環境 (mise, Python, uv) をインストールしますか? [Y/n]: "
   echo ""
   [[ $REPLY =~ ^[Nn]$ ]] && INSTALL_PYTHON=0
+
+  _prompt_default_no "🍞 Bun (mise, JS ランタイム/パッケージマネージャ, opt-in) をインストールしますか? [y/N]: "
+  echo ""
+  [[ $REPLY =~ ^[Yy]$ ]] && INSTALL_BUN=1
 
   _prompt_default_yes "🐳 コンテナ / サンドボックスツール (Docker, Docker Compose, bubblewrap) をインストールしますか? [Y/n]: "
   echo ""
@@ -467,7 +473,7 @@ echo "✅ 依存パッケージインストール完了"
 # 1. ビルド → 2. 基本CLI → 3. Git (git, gh) → 4. mise + 言語環境
 # → 5. Git セキュリティ (gitleaks) → 6. コンテナ / サンドボックス → 7. クラウド
 # → 8. Terminal multiplexer (opt-in) → 9. AIエージェント
-# → 10. AI パワーツール → 11. 開発補助
+# → 10. AI パワーツール → 11. 開発補助 → 12. Bun (opt-in)
 
 install_build_tools
 install_basic_cli_tools
@@ -483,6 +489,11 @@ install_multiplexer_tools
 install_ai_tools
 install_ai_power_tools
 install_dev_tools
+# Bun (opt-in) は install_dev_tools の `chezmoi apply`（global mise config を上書き）
+# より後に登録する必要がある。bun は global config テンプレートに意図的に
+# 列挙していない真の opt-in のため、apply 前に登録すると wipe される。
+# 詳細は scripts/lib/install-languages.sh の install_bun ヘッダを参照。
+install_bun
 
 # ========================================
 # 6. 環境設定（PATH、Git設定等）
@@ -607,6 +618,7 @@ echo ""
 echo "  📦 Node.js エコシステム:"
 echo "    Node.js:        $(node --version 2>/dev/null || echo '未インストール')"
 echo "    pnpm:           $(pnpm --version 2>/dev/null || echo '未インストール')"
+echo "    Bun:            $(bun --version 2>/dev/null || echo '未インストール (opt-in)')"
 echo ""
 echo "  🐍 Python エコシステム:"
 echo "    Python:         $(python3 --version 2>/dev/null || echo '未インストール')"

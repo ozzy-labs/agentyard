@@ -66,6 +66,13 @@ if [ "${INSTALL_CONTAINER:-1}" = "1" ]; then
   echo ""
 fi
 
+# Bun は opt-in（既定 OFF）。INSTALL_BUN=1 を明示したときだけ assert する。
+if [ "${INSTALL_BUN:-0}" = "1" ]; then
+  echo "🍞 Bun (opt-in)"
+  assert_tool "bun" bun --version
+  echo ""
+fi
+
 if [ "${INSTALL_TMUX:-0}" = "1" ] || [ "${INSTALL_ZELLIJ:-0}" = "1" ]; then
   echo "🪟 Terminal multiplexer"
   if [ "${INSTALL_TMUX:-0}" = "1" ]; then

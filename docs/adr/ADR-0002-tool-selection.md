@@ -32,6 +32,14 @@
 - `pnpm@<pinned>` — pnpm（aqua バックエンド、具体パッチ版にピン）
 - `python@latest` — Python（core バックエンド、レンジ指定例外）
 
+### JS ランタイム（opt-in）
+
+- `bun@1` — Bun（core バックエンド、レンジ指定。**既定 OFF**、`INSTALL_BUN=1` で有効化）
+  - **採用理由**: Bun-native な MCP サーバ（`bun:sqlite` を使うアプリは `npx`/Node では動かない）をホスト直で動かす需要がある。エコシステムの主流は依然 Node + `npx` のため Bun を **既定 ON にはせず**、AI-first ツール群を動かしたいユーザー向けの opt-in に留める（Node + pnpm の置き換えではなく追加の選択肢）。
+  - **ピン運用**: bun は mise の core バックエンド扱いのため、node / python と同じ **レンジ指定例外**に乗る（aqua レジストリ追従ずれ・具体パッチ版ピン・Renovate churn の対象外）。
+  - **真の opt-in 設計（global config テンプレート非掲載）**: `dotfiles/dot_config/mise/config.toml` に列挙すると `install_dev_tools` 末尾の `mise install` で **全ホストに入り opt-in でなくなる**（trivy が同経路で全員に入るのと同じ挙動）。これを避けるため bun はテンプレートに**意図的に列挙しない**。一方 `chezmoi apply` は global config を上書きするため、apply より前に `mise use --global bun@1` すると登録が消える（ADR-0003 / #153・#156 の wipe 罠）。対策として `install_bun` を **`install_dev_tools`（＝最後の `chezmoi apply`）より後**に呼び、apply 後に登録することで wipe を回避しつつテンプレート非掲載を両立する。
+  - **doctor 非対象**: opt-in のため `check_mise_managed_tools` の必須リスト（node/pnpm/python/uv）には**含めない**（zellij と同様。含めると未導入ホストで誤 warning になる）。
+
 ### Git / security
 
 - `gitleaks` — シークレットスキャン（lefthook pre-commit で実行）

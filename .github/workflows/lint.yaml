@@ -17,6 +17,11 @@ jobs:
   lint:
     name: Static analysis (shellcheck / shfmt / markdownlint / yaml / gitleaks)
     runs-on: ubuntu-latest
+    # Job-level so every `mise exec` step (not just mise-action setup) skips trivy.
+    # trivy's github: backend triggers attestation verification against aquasecurity's
+    # IP-allowlisted API (403 in CI); trivy is only needed by the local pre-commit hook.
+    env:
+      MISE_DISABLE_TOOLS: "github:aquasecurity/trivy"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -28,7 +33,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MISE_DISABLE_TOOLS: "github:aquasecurity/trivy"
 
       - name: shellcheck
         run: |

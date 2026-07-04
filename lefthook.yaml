@@ -34,4 +34,4 @@ pre-commit:
       run: "true"
       skip: true
     agentyard-trivy:
-      run: mise exec -- trivy fs --scanners vuln --exit-code 1 --no-progress .
+      run: mise exec -- trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --no-progress .

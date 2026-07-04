@@ -60,4 +60,7 @@ pre-commit:
     gitleaks:
       run: mise exec -- gitleaks protect --staged --no-banner
     trivy:
-      run: mise exec -- trivy fs --scanners vuln,secret --exit-code 1 --no-progress .
+      # Pre-commit gate: fail only on HIGH/CRITICAL vulnerabilities. A pre-existing
+      # LOW/MEDIUM/UNKNOWN (or fix-unavailable) advisory in a dependency must not
+      # block every unrelated commit; those are surfaced by CI / Dependabot instead.
+      run: mise exec -- trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 --no-progress .

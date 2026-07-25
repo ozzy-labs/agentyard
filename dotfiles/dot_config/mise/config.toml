@@ -25,7 +25,10 @@ python = "latest"
 # Release 移行に追従していないため、github バックエンドに切替えて回避する。
 # lefthook の pre-commit フックが `mise exec -- trivy ...` を呼ぶため、
 # chezmoi apply 後も global config に残るよう必ずここで明示する。
-"github:aquasecurity/trivy" = "0.70.0"
+#
+# github_attestations = false / asset_pattern の理由はリポルート .mise.toml の
+# 同項目コメントを参照（2 ファイルは必ず同じピン・同じオプションに保つ）。
+"github:aquasecurity/trivy" = { version = "0.70.0", github_attestations = false, asset_pattern = '*{% if os() == "macos" or os() == "darwin" %}macOS{% else %}Linux{% endif %}-{% if arch() == "arm64" or arch() == "aarch64" %}ARM64{% else %}64bit{% endif %}.tar.gz' }
 gitleaks = "8.30.1"
 ast-grep = "0.42.1"
 yq = "4.53.2"

@@ -10,9 +10,15 @@ install_git_tools() {
   echo "🔧 バージョン管理ツールをインストール中..."
 
   # Git公式PPAが既に追加されているかチェック（.list / .sources 両形式を網羅）
+  # PPA が当該 codename に未対応（Ubuntu devel 等）の場合、apt_add_ppa は登録せず
+  # 非 0 を返す。その場合は distro 標準の git にフォールバックする（最新安定版では
+  # なくなるが、apt 全体を巻き込んで停止させるよりはるかに望ましい）。
   if ! apt_ppa_registered "git-core" "git-core"; then
-    apt_add_ppa "git-core" "ppa" "F911AB184317630C59970973E363C90F8F1B6217" "git-core"
-    sudo apt-get update >/dev/null
+    if apt_add_ppa "git-core" "ppa" "F911AB184317630C59970973E363C90F8F1B6217" "git-core"; then
+      sudo apt-get update >/dev/null
+    else
+      echo "  ℹ️  distro 標準の git を使用します"
+    fi
   fi
 
   # Git のインストール・アップデート

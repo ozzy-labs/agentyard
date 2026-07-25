@@ -120,15 +120,81 @@ export -f apt-get
   lsb_release() { echo "jammy"; }
   export -f lsb_release
 
+  # codename 対応判定（launchpadcontent の Release）は成功させ、
+  # keyserver からの鍵取得だけを失敗させる
   curl() {
     echo "curl $*" >>"$MOCK_LOG"
-    return 1
+    case "$*" in
+    *keyserver.ubuntu.com*) return 1 ;;
+    *) return 0 ;;
+    esac
   }
   export -f curl
 
   run apt_add_ppa "git-core" "ppa" "DEADBEEF" "git-core"
   [ "$status" -ne 0 ]
   [[ "$output" == *"取得に失敗"* ]]
+}
+
+# ------------------------------------------------------------------
+# apt_ppa_supports_codename: codename 別 Release ファイルの URL を叩く
+#
+# Ubuntu devel の新 codename（例: stonking）に PPA が未対応な期間、
+# 登録前にこの判定で弾かないと以後の apt-get update が全滅する。
+# ------------------------------------------------------------------
+
+@test "apt_ppa_supports_codename: probes the codename-specific Release URL" {
+  curl() {
+    echo "curl $*" >>"$MOCK_LOG"
+    return 0
+  }
+  export -f curl
+
+  run apt_ppa_supports_codename "git-core" "ppa" "noble"
+  [ "$status" -eq 0 ]
+  grep -q "ppa.launchpadcontent.net/git-core/ppa/ubuntu/dists/noble/Release" "$MOCK_LOG"
+}
+
+# ------------------------------------------------------------------
+# apt_ppa_supports_codename: Release が無い（未対応 codename）→ 非 0
+# ------------------------------------------------------------------
+
+@test "apt_ppa_supports_codename: returns non-zero when Release is missing" {
+  curl() { return 22; } # curl -f の HTTP エラー終了コード
+  export -f curl
+
+  run apt_ppa_supports_codename "git-core" "ppa" "stonking"
+  [ "$status" -ne 0 ]
+}
+
+# ------------------------------------------------------------------
+# apt_add_ppa: 未対応 codename では登録せず rc=2 を返す（回帰: canary devel 失敗）
+#
+# 未対応 codename の source を書き込むと以後の apt-get update が
+# "does not have a Release file" で失敗し、apt 依存の導入が全停止する。
+# 書き込みを一切行わないことを sudo tee の不在で検証する。
+# ------------------------------------------------------------------
+
+@test "apt_add_ppa: skips registration with rc=2 when codename is unsupported" {
+  lsb_release() { echo "stonking"; }
+  export -f lsb_release
+
+  # Release 取得のみ失敗させる（鍵取得まで到達しないことも併せて確認）
+  curl() {
+    echo "curl $*" >>"$MOCK_LOG"
+    case "$*" in
+    *ppa.launchpadcontent.net*) return 22 ;;
+    *) return 0 ;;
+    esac
+  }
+  export -f curl
+
+  run apt_add_ppa "git-core" "ppa" "DEADBEEF" "git-core"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"stonking に未対応"* ]]
+  # sources.list.d への書き込みも keyserver へのアクセスも発生していないこと
+  ! grep -q "sudo tee" "$MOCK_LOG"
+  ! grep -q "keyserver.ubuntu.com" "$MOCK_LOG"
 }
 
 # ------------------------------------------------------------------

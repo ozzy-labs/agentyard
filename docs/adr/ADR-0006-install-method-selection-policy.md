@@ -48,6 +48,13 @@ mise を採用したツールは、さらに 3 段階に分類する:
 - **aqua backend**（pnpm, gitleaks, ast-grep, yq, just, zoxide, shellcheck, chezmoi, zellij）→ **具体パッチ版にピン + Renovate（mise manager）で更新**。上流リリースと aqua レジストリの追従ずれで任意の新版が破綻し得るため。
 - **github backend フォールバック**（uv, trivy）→ aqua の `signer_workflow` が上流の Immutable Release 移行に追従しないツールのみ `github:<owner>/<repo>` に切替えて回避する。
 
+github backend へ落とした後も、上流リポジトリ側の事情で追加の tool option が要る場合がある。**設定はツール単位に閉じ、グローバル設定（`[settings]`）へ広げない**（他ツールの検証を巻き添えで弱めないため）。
+
+| option | 適用ツール | 理由 |
+|---|---|---|
+| `github_attestations = false` | trivy | `aquasecurity` org が GitHub の IP allow list を有効にしており、attestation API が GitHub Actions ランナー IP から 403 を返す。mise は検証失敗を fatal 扱いするためインストール自体が落ちる。無効化しても検証は残る（チェックサム + sigstore バンドルによる SLSA provenance 検証にフォールバック）。落ちるのは 403 になる GitHub attestation API 経路だけ。 |
+| `asset_pattern` | trivy | mise の asset 自動判定が `Linux-64bit` 形式の命名から x64 を解決できず `Linux-32bit` を掴む。OS/arch をテンプレートで明示し決定論的に選ばせる。 |
+
 ### 3. macOS の分岐（ADR-0005 を参照・再掲）
 
 `setup-local-macos.sh` は **mise-first 方針**を維持し、`brew install` を一切呼ばない。

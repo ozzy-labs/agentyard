@@ -57,7 +57,10 @@ jobs:
             const date = new Date().toISOString().slice(0, 10);
             const { serverUrl, repo: { owner, repo }, runId } = context;
             const runUrl = `${serverUrl}/${owner}/${repo}/actions/runs/${runId}`;
-            const title = `Canary failure: ubuntu:${tag} / ${date}`;
+            // title に日付を含めない: 含めると週次実行のたびに別 title となり
+            // dedup が効かず同一原因の issue が毎週増殖する（#177〜#195 の 12 件）。
+            // 原因ごとに 1 件へ集約し、再発は既存 issue へのコメントで記録する。
+            const title = `Canary failure: ubuntu:${tag}`;
             const body = [
               `Canary workflow failed on \`ubuntu:${tag}\` on ${date}.`,
               ``,
@@ -80,7 +83,7 @@ jobs:
               `Non-blocking: Canary failures do not gate main-line PRs.`,
             ].join("\n");
 
-            // 同じ (tag, date) の Open Issue が既にあれば新規起票せずコメントで再発を記録
+            // 同じ tag の Open Issue が既にあれば新規起票せずコメントで再発を記録
             const existing = await github.paginate(
               github.rest.issues.listForRepo,
               {
@@ -98,7 +101,7 @@ jobs:
                 owner,
                 repo,
                 issue_number: duplicate.number,
-                body: `同じ組み合わせで再発しました。\n\n**Run:** ${runUrl}`,
+                body: `${date} に再発しました。\n\n**Run:** ${runUrl}`,
               });
             } else {
               await github.rest.issues.create({
@@ -158,7 +161,8 @@ jobs:
             const date = new Date().toISOString().slice(0, 10);
             const { serverUrl, repo: { owner, repo }, runId } = context;
             const runUrl = `${serverUrl}/${owner}/${repo}/actions/runs/${runId}`;
-            const title = `Canary failure: Ubuntu Server (native) / ${date}`;
+            // title に日付を含めない（理由は canary-ubuntu-future ジョブのコメント参照）
+            const title = `Canary failure: Ubuntu Server (native)`;
             const body = [
               `Canary workflow failed on bare ubuntu-latest (non-WSL Linux) on ${date}.`,
               ``,
@@ -174,7 +178,7 @@ jobs:
             if (duplicate) {
               await github.rest.issues.createComment({
                 owner, repo, issue_number: duplicate.number,
-                body: `同じ組み合わせで再発しました。\n\n**Run:** ${runUrl}`,
+                body: `${date} に再発しました。\n\n**Run:** ${runUrl}`,
               });
             } else {
               await github.rest.issues.create({
@@ -217,7 +221,8 @@ jobs:
             const date = new Date().toISOString().slice(0, 10);
             const { serverUrl, repo: { owner, repo }, runId } = context;
             const runUrl = `${serverUrl}/${owner}/${repo}/actions/runs/${runId}`;
-            const title = `Canary failure: macOS / ${date}`;
+            // title に日付を含めない（理由は canary-ubuntu-future ジョブのコメント参照）
+            const title = `Canary failure: macOS`;
             const body = [
               `Canary workflow failed on macos-latest on ${date}.`,
               ``,
@@ -239,7 +244,7 @@ jobs:
             if (duplicate) {
               await github.rest.issues.createComment({
                 owner, repo, issue_number: duplicate.number,
-                body: `同じ組み合わせで再発しました。\n\n**Run:** ${runUrl}`,
+                body: `${date} に再発しました。\n\n**Run:** ${runUrl}`,
               });
             } else {
               await github.rest.issues.create({

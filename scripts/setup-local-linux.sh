@@ -442,11 +442,17 @@ fi
 echo ""
 echo "🔧 Git（最新安定版）をインストール中..."
 
+# PPA が当該 codename に未対応（Ubuntu devel 等）の場合、apt_add_ppa は登録せず
+# 非 0 を返す。未対応 codename を登録すると以後の apt-get update が全滅するため、
+# その場合は PPA を諦めて distro 標準の git にフォールバックする。
 if ! apt_ppa_registered "git-core" "git-core"; then
   echo "  ℹ️  Git公式PPAを追加しています..."
-  apt_add_ppa "git-core" "ppa" "F911AB184317630C59970973E363C90F8F1B6217" "git-core"
-  sudo apt-get update >/dev/null
-  echo "  ✅ Git公式PPAを追加しました"
+  if apt_add_ppa "git-core" "ppa" "F911AB184317630C59970973E363C90F8F1B6217" "git-core"; then
+    sudo apt-get update >/dev/null
+    echo "  ✅ Git公式PPAを追加しました"
+  else
+    echo "  ℹ️  distro 標準の git を使用します"
+  fi
 fi
 
 if ! command -v git &>/dev/null; then

@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.4.0](https://github.com/ozzy-labs/agentyard/compare/v0.3.1...v0.4.0) (2026-07-25)
+
+
+### Features
+
+* add opt-in Bun runtime (INSTALL_BUN) via mise ([#179](https://github.com/ozzy-labs/agentyard/issues/179)) ([2e76ad5](https://github.com/ozzy-labs/agentyard/commit/2e76ad5248e5e905afa95f2419ac6b4549bdd51c))
+
+
+### Bug Fixes
+
+* gate pre-commit trivy on high/critical severity ([#189](https://github.com/ozzy-labs/agentyard/issues/189)) ([4fd7c8c](https://github.com/ozzy-labs/agentyard/commit/4fd7c8c728c9c872bf046262fbf5c8a5c61a8e9b))
+* make canary green (trivy attestation 403, PPA codename fallback, issue dedup) ([#196](https://github.com/ozzy-labs/agentyard/issues/196)) ([21ec11c](https://github.com/ozzy-labs/agentyard/commit/21ec11cf6d1fa5bdec0b69acbf45112db4eac684))
+* run chezmoi apply non-interactively (--force) in all modes ([#182](https://github.com/ozzy-labs/agentyard/issues/182)) ([e68cdb9](https://github.com/ozzy-labs/agentyard/commit/e68cdb9b4aaa35a90c9c79d09120bf9096af9418))
+
+
+### Documentation
+
+* add ADR-0006 install method selection policy ([#181](https://github.com/ozzy-labs/agentyard/issues/181)) ([d2b6c7e](https://github.com/ozzy-labs/agentyard/commit/d2b6c7e0632c807c6c18decec5817e567d8f30d0))
+
+
+### Continuous Integration
+
+* fix MISE_DISABLE_TOOLS to actually exclude trivy ([#188](https://github.com/ozzy-labs/agentyard/issues/188)) ([f4f4085](https://github.com/ozzy-labs/agentyard/commit/f4f408580f8fe52a24164fe2ac9fac34e15f483d))
+
 ## [0.3.1](https://github.com/ozzy-labs/agentic-bootstrap/compare/v0.3.0...v0.3.1) (2026-05-31)
 
 

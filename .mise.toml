@@ -25,7 +25,23 @@ gitleaks = "8.30.1"
 # lefthook の pre-commit フックが `mise exec -- trivy ...` を呼ぶため、
 # 新規 clone した contributor の最初のコミットがフックで失敗しないよう
 # リポルートの .mise.toml にも明示する（dotfiles テンプレートと同期）。
-"github:aquasecurity/trivy" = "0.70.0"
+#
+# github_attestations = false:
+#   aquasecurity organization は GitHub の IP allow list を有効にしており、
+#   attestation API (/repos/aquasecurity/trivy/attestations/...) が GitHub Actions
+#   ランナー IP からは 403 を返す。mise は検証失敗を fatal 扱いするため trivy の
+#   インストール自体が落ちる（canary 6 週連続失敗の主因）。tool 単位で無効化し、
+#   他の github バックエンドツール（uv 等）の attestation 検証は維持する。
+#   なお無効化しても検証が無くなるわけではない: mise はチェックサム検証に加え、
+#   trivy が同梱する sigstore バンドルによる SLSA provenance 検証にフォールバックする
+#   （実測ログ: `[2/3] verify SLSA provenance`）。落ちるのは GitHub attestation API
+#   への問い合わせ経路だけで、これが IP allow list で 403 になっている当該箇所。
+# asset_pattern:
+#   mise の自動判定は trivy の asset 命名（`Linux-64bit`）から x64 を解決できず、
+#   アルファベット順で先頭の `Linux-32bit` を掴む。x86_64 では静的リンクの i386
+#   バイナリが偶然動くため気付きにくいが、ARM64 Linux では `Linux-ARM`（32bit）を
+#   掴んで実行不能になる。OS/arch を明示して決定論的に選ばせる。
+"github:aquasecurity/trivy" = { version = "0.70.0", github_attestations = false, asset_pattern = '*{% if os() == "macos" or os() == "darwin" %}macOS{% else %}Linux{% endif %}-{% if arch() == "arm64" or arch() == "aarch64" %}ARM64{% else %}64bit{% endif %}.tar.gz' }
 
 # Git hooks & commit conventions
 lefthook = "2.1.6"

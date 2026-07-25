@@ -19,8 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Job-level so every `mise exec` step (not just mise-action setup) skips trivy.
-    # trivy's github: backend triggers attestation verification against aquasecurity's
-    # IP-allowlisted API (403 in CI); trivy is only needed by the local pre-commit hook.
+    # trivy is only needed by the local pre-commit hook, so installing it here is
+    # pure overhead. (This exclusion originally also worked around an attestation
+    # 403 from aquasecurity's IP-allowlisted API; that is fixed at the config level
+    # by `github_attestations = false` in .mise.toml, so only the perf reason remains.)
     env:
       MISE_DISABLE_TOOLS: "github:aquasecurity/trivy"
     steps:

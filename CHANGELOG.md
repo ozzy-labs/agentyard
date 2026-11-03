@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/ozzy-labs/agentyard/compare/v0.4.0...v0.5.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* chezmoi dotfiles, locale/timezone, and git pull.rebase / core.editor defaults are removed; docker, zsh, AWS CLI, OCR/audio and lint tools are no longer installed by default; Antigravity CLI and Gemini CLI are opt-in; Ubuntu 22.04 and non-Ubuntu Linux are unsupported. See docs/migration-v0.5.md.
+
+### Features
+
+* host-first redesign for v0.5.0 (ADR-0007) ([#198](https://github.com/ozzy-labs/agentyard/issues/198)) ([9e3e491](https://github.com/ozzy-labs/agentyard/commit/9e3e49131172c1539bca41b798a427a5d7d936bf))
+
 ## [0.4.0](https://github.com/ozzy-labs/agentyard/compare/v0.3.1...v0.4.0) (2026-07-25)
 
 

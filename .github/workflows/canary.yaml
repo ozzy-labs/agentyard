@@ -45,7 +45,10 @@ jobs:
         env:
           GITHUB_TOKEN_FOR_MISE: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # devel / rolling are newer than the supported releases on purpose:
+          # the canary checks the next Ubuntu ahead of time, so bypass the gate.
           docker run --rm -e "GITHUB_TOKEN=$GITHUB_TOKEN_FOR_MISE" \
+            -e AGENTYARD_ALLOW_UNSUPPORTED=1 \
             agentyard-canary:${{ matrix.ubuntu-tag }}
 
       - name: Open issue on failure

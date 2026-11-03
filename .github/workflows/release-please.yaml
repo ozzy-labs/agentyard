@@ -11,6 +11,8 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write # artifact attestations (Sigstore)
+  attestations: write
 
 jobs:
   release-please:
@@ -31,20 +33,35 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: ${{ steps.release.outputs.release_created == 'true' }}
 
-      - name: Compute SHA256 checksum for install.sh
+      # Release assets (ADR-0007 §8):
+      #   agentyard.tar.gz(.sha256)  archive that install.sh downloads and verifies
+      #   install.sh(.sha256)        entry point for releases/latest/download/install.sh
+      # Both are covered by GitHub Artifact Attestations:
+      #   gh attestation verify <file> --repo ozzy-labs/agentyard
+      - name: Build release archive and checksums
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: |
+          git archive --format=tar.gz -o agentyard.tar.gz HEAD \
+            install.sh scripts config LICENSE README.md README.ja.md
+          sha256sum agentyard.tar.gz > agentyard.tar.gz.sha256
           sha256sum install.sh > install.sh.sha256
-          echo "Generated checksum:"
-          cat install.sh.sha256
+          cat agentyard.tar.gz.sha256 install.sh.sha256
 
-      - name: Attach install.sh and SHA256 to GitHub Release
+      - name: Attest build provenance
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            agentyard.tar.gz
+            install.sh
+
+      - name: Attach assets to GitHub Release
         if: ${{ steps.release.outputs.release_created == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.release.outputs.tag_name }}
         run: |
           gh release upload "$TAG" \
-            install.sh \
-            install.sh.sha256 \
+            agentyard.tar.gz agentyard.tar.gz.sha256 \
+            install.sh install.sh.sha256 \
             --clobber

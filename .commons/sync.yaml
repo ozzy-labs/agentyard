@@ -12,6 +12,10 @@ synced_at: 2026-06-07T03:29:37Z
 # HEAD SHA can be obtained via:
 #   gh api repos/ozzy-labs/skills/commits/main --jq .sha
 pinned:
+  # ADR-0007: AGENTS.md is the single instruction file. Keep commons from
+  # re-creating the per-agent files removed here.
+  - CLAUDE.md
+  - .github/copilot-instructions.md
   - .devcontainer/Dockerfile
   - .devcontainer/devcontainer.json
   - .devcontainer/initialize.sh

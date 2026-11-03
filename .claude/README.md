@@ -155,7 +155,7 @@ touch .claude/settings.local.json
 - ✅ 読み取り専用: `git status`, `git log`, `git diff` は承認不要にできる
 - ❌ 変更操作: `git add`, `git commit`, `git push` 等は手動承認を推奨
 
-これは`CLAUDE.md`の「Git操作のルール」に従っています。
+これは `AGENTS.md` と `.claude/rules/git-workflow.md` の Git 操作のルールに従っています。
 
 ---
 
@@ -182,4 +182,4 @@ A: **settings.local.json が優先**されます。
 ## 参考資料
 
 - [Claude Code 公式ドキュメント](https://code.claude.com/docs/)
-- [CLAUDE.md](../CLAUDE.md) - このリポジトリの設計思想とルール
+- [AGENTS.md](../AGENTS.md) - このリポジトリの設計思想とルール

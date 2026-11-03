@@ -8,10 +8,12 @@
 - 推奨案とその理由を提示する
 - `.env` ファイルは読み取り・ステージングしない
 - 破壊的な Git 操作を避ける
+- ユーザーへの確認は、エージェントが提供する対話的な質問機能（Claude Code の `AskUserQuestion` など）を使う
+- 作業完了時のネクストアクションは提案にとどめ、ユーザーの確認なく実行しない
 
 ## プロジェクト概要
 
-`agentyard`: Bash 製の開発ホストプロビジョナ (Linux/WSL2/macOS)。AI エージェント駆動開発に必要なツール群を一発で導入する。
+`agentyard`: Bash 製の開発ホストプロビジョナ（Ubuntu 24.04 / 26.04、WSL2、macOS 26 / 27）。AI エージェントを使った開発のためのホストを構築する。設計方針は [ADR-0007](docs/adr/ADR-0007-host-first-redesign.md) を参照。
 
 ## Tech Stack
 
@@ -19,14 +21,15 @@
 - Hooks: lefthook
 - Tests: bats (unit), shell (smoke), Docker (integration)
 - Lint: shellcheck, shfmt, markdownlint, yamllint, actionlint, gitleaks, trivy, commitlint
-- Version management: mise (`.mise.toml` で repo / `.config/mise/config.toml` で global)
+- Version management: mise（このリポジトリの開発ツールは `.mise.toml`、agentyard がホストに入れる固定バージョンは `config/tools.toml`）
 
 ## 主要コマンド
 
 ```bash
-./install.sh local         # ローカルホストへのセットアップ
-./install.sh update        # 既存ツール一括更新
-./install.sh doctor        # 環境健全性チェック
+./install.sh install       # ホストのセットアップ
+./install.sh update        # agentyard が入れたものだけを更新
+./install.sh doctor        # 環境の診断（--repo <path> でリポジトリの AGENTS.md 診断）
+./install.sh uninstall     # agentyard が書き換えた設定を元に戻す
 lefthook run pre-commit    # 全 lint + format チェック
 bats tests/unit            # unit テスト
 bash tests/smoke/run.sh    # smoke テスト
@@ -74,9 +77,12 @@ bash tests/smoke/run.sh    # smoke テスト
 
 ## Adapter Files
 
+指示ファイルは本 `AGENTS.md` に一本化している（ADR-0007）。`CLAUDE.md` を置くと Claude Code は `AGENTS.md` を読まなくなるため、作らないこと。
+
 | Agent | Configuration |
 |-------|---------------|
-| Claude Code | `CLAUDE.md`, `.claude/` |
-| Gemini CLI | `.gemini/settings.json` → `AGENTS.md` |
+| Claude Code | `AGENTS.md`（v2.1.277 以降はネイティブに読む）, `.claude/` |
 | Codex CLI | `AGENTS.md` + `.agents/skills/` |
-| GitHub Copilot | `AGENTS.md` + `.agents/skills/` |
+| GitHub Copilot | `AGENTS.md` |
+| Antigravity CLI | `AGENTS.md` + `.agents/skills/` |
+| Gemini CLI | `.gemini/settings.json` → `AGENTS.md` |

@@ -2,101 +2,62 @@
 # =======================================================================
 # tests/integration/assert-tools.sh
 # -----------------------------------------------------------------------
-# 主要ツールがインストール後にバージョン取得可能であることを検証。
-# mise シム経由でのみ到達可能なツールも想定し、PATH を mise activate
-# 相当で拡張してから各コマンドを呼ぶ。
+# Run as a login shell (bash -l) so the agentyard env.sh is in effect.
+# Asserts the default tools, the four default agents, and the opt-ins the
+# entrypoint selected (AGENTYARD_WITH).
 # =======================================================================
 set -u
-
-# mise activate 相当の PATH 拡張（非インタラクティブシェルでもツールを解決）
-export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
-
-PASS=0
 FAIL=0
-
-# $1: ツール名（表示用）, $2...: バージョン取得コマンド
-assert_tool() {
-  local name="$1"
-  shift
-  local output
-  if output=$("$@" 2>&1); then
-    printf '  ✅ %-14s %s\n' "$name:" "$(printf '%s' "$output" | head -n1)"
-    PASS=$((PASS + 1))
+check() {
+  if command -v "$1" >/dev/null 2>&1; then
+    printf '  ✅ %s\n' "$1"
   else
-    printf '  ❌ %-14s (command failed: %s)\n' "$name:" "$*"
-    FAIL=$((FAIL + 1))
+    printf '  ❌ %s not found\n' "$1"
+    FAIL=1
   fi
 }
 
-echo "🔧 Version manager / runtimes"
-assert_tool "mise" mise --version
-assert_tool "node" node --version
-assert_tool "pnpm" pnpm --version
-assert_tool "python3" python3 --version
-assert_tool "uv" uv --version
+echo "Default tools:"
+for t in git git-lfs gh jq rg tree fzf fd bwrap socat mise node pnpm uv; do check "$t"; done
 
-echo ""
-echo "🔒 Git / security"
-assert_tool "git" git --version
-assert_tool "gh" gh --version
-assert_tool "gitleaks" gitleaks version
-# trivy は dotfiles テンプレート (dot_config/mise/config.toml) で global pin される。
-# 過去に chezmoi apply が trivy を消す回帰 (#153/#156) があったため、
-# 統合テストで positive assertion を入れて再発を検知する。
-assert_tool "trivy" trivy --version
+echo "Default agents:"
+for t in claude codex copilot agy; do check "$t"; done
 
-echo ""
-echo "🧠 AI power tools"
-assert_tool "markitdown" markitdown --version
-assert_tool "tesseract" tesseract --version
-assert_tool "ffmpeg" ffmpeg -version
-assert_tool "ast-grep" ast-grep --version
-assert_tool "yq" yq --version
+echo "Opt-ins (${AGENTYARD_WITH:-}):"
+case ",${AGENTYARD_WITH:-}," in *,zsh,*) check zsh ;; esac
+case ",${AGENTYARD_WITH:-}," in *,tmux,*) check tmux ;; esac
+case ",${AGENTYARD_WITH:-}," in *,zellij,*) check zellij ;; esac
+case ",${AGENTYARD_WITH:-}," in *,aws,*) check aws ;; esac
+case ",${AGENTYARD_WITH:-}," in *,ast-grep,*) check ast-grep ;; esac
+case ",${AGENTYARD_WITH:-}," in *,yq,*) check yq ;; esac
+case ",${AGENTYARD_WITH:-}," in *,markitdown,*) check markitdown ;; esac
+case ",${AGENTYARD_WITH:-}," in *,bun,*) check bun ;; esac
 
-echo ""
-echo "🛠️ Dev helpers"
-assert_tool "just" just --version
-assert_tool "zoxide" zoxide --version
-assert_tool "shellcheck" shellcheck --version
-
-echo ""
-if [ "${INSTALL_CONTAINER:-1}" = "1" ]; then
-  echo "🐳 Container / sandbox"
-  assert_tool "bubblewrap" bwrap --version
-  echo ""
+echo "AGENTS.md wiring:"
+if case ",${AGENTYARD_WITH:-}," in *,agents-md,*) true ;; *) false ;; esac then
+  [ -f "$HOME/.agents/AGENTS.md" ] && echo "  ✅ ~/.agents/AGENTS.md" || {
+    echo "  ❌ ~/.agents/AGENTS.md"
+    FAIL=1
+  }
+  grep -qF '@~/.agents/AGENTS.md' "$HOME/.claude/CLAUDE.md" && echo "  ✅ Claude Code import" || {
+    echo "  ❌ Claude Code import"
+    FAIL=1
+  }
+  [ -L "$HOME/.codex/AGENTS.md" ] && echo "  ✅ Codex symlink" || {
+    echo "  ❌ Codex symlink"
+    FAIL=1
+  }
+  grep -qF '](~/.agents/AGENTS.md)' "$HOME/.gemini/AGENTS.md" && echo "  ✅ Antigravity include" || {
+    echo "  ❌ Antigravity include"
+    FAIL=1
+  }
+  case ",${COPILOT_CUSTOM_INSTRUCTIONS_DIRS:-}," in
+  *",$HOME/.agents,"*) echo "  ✅ Copilot dirs" ;;
+  *)
+    echo "  ❌ COPILOT_CUSTOM_INSTRUCTIONS_DIRS=${COPILOT_CUSTOM_INSTRUCTIONS_DIRS:-}"
+    FAIL=1
+    ;;
+  esac
 fi
 
-# Bun は opt-in（既定 OFF）。INSTALL_BUN=1 を明示したときだけ assert する。
-if [ "${INSTALL_BUN:-0}" = "1" ]; then
-  echo "🍞 Bun (opt-in)"
-  assert_tool "bun" bun --version
-  echo ""
-fi
-
-if [ "${INSTALL_TMUX:-0}" = "1" ] || [ "${INSTALL_ZELLIJ:-0}" = "1" ]; then
-  echo "🪟 Terminal multiplexer"
-  if [ "${INSTALL_TMUX:-0}" = "1" ]; then
-    assert_tool "tmux" tmux -V
-  fi
-  if [ "${INSTALL_ZELLIJ:-0}" = "1" ]; then
-    assert_tool "zellij" zellij --version
-  fi
-  echo ""
-fi
-
-echo "📌 Basic CLI"
-assert_tool "tree" tree --version
-assert_tool "fzf" fzf --version
-assert_tool "jq" jq --version
-assert_tool "rg" rg --version
-assert_tool "fd" fd --version
-
-echo ""
-TOTAL=$((PASS + FAIL))
-if [ "$FAIL" -eq 0 ]; then
-  printf '✅ All %d tool assertions passed\n' "$TOTAL"
-  exit 0
-else
-  printf '❌ %d of %d tool assertions failed\n' "$FAIL" "$TOTAL"
-  exit 1
-fi
+exit "$FAIL"

@@ -68,10 +68,10 @@ jobs:
               ``,
               `## Triage checklist`,
               ``,
-              `- [ ] apt package renamed / removed (e.g. \`tesseract-ocr-jpn\`, \`ffmpeg\`)`,
-              `- [ ] PPA no longer supports this Ubuntu version (e.g. \`ppa:git-core/ppa\`)`,
-              `- [ ] Upstream tool breaking change (\`mise\`, \`gitleaks\`, \`ast-grep\`, etc.)`,
-              `- [ ] Installer script behavior change (\`mise.run\`, \`astral.sh/uv\`, \`get.volta.sh\`)`,
+              `- [ ] apt package renamed / removed in this Ubuntu version`,
+              `- [ ] Vendor apt repository does not support this codename yet (Docker, Azure CLI)`,
+              `- [ ] Upstream tool breaking change (\`mise\`, \`ast-grep\`, \`yq\`, etc.)`,
+              `- [ ] Agent installer behavior change (claude / codex / copilot / agy)`,
               `- [ ] Transient network issue — re-run \`gh workflow run canary.yaml\` to confirm`,
               ``,
               `## How to reproduce locally`,
@@ -113,45 +113,29 @@ jobs:
               });
             }
 
-  # 新規: 非 WSL Linux（Ubuntu Server 等を想定した GitHub Actions の素の ubuntu-latest）
-  # で setup-local-linux.sh を直接実行し、bare-metal インストールが緑であることを検証する。
+  # Bare Ubuntu runner (non-WSL, non-container): install.sh install directly.
   canary-ubuntu-native:
     name: Canary (Ubuntu Server, native install)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       AGENTYARD_ASSUME_YES: "1"
+      AGENTYARD_OFFLINE: "1"
+      AGENTYARD_WITH: agents-md
       CI: "true"
-      # コンテナ専用の重量ツールはランナー上では不要なので最小化
-      INSTALL_CONTAINER: "0"
-      INSTALL_CLAUDE_CODE: "0"
-      INSTALL_CODEX_CLI: "0"
-      INSTALL_COPILOT_CLI: "0"
-      INSTALL_GEMINI_CLI: "0"
-      INSTALL_AWS_CLI: "0"
-      INSTALL_AZURE_CLI: "0"
-      INSTALL_GCLOUD_CLI: "0"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Pre-configure git identity (skip interactive prompt)
-        run: |
-          git config --global user.name "Canary Runner"
-          git config --global user.email "canary@example.com"
-
-      - name: Run install.sh local on bare ubuntu-latest
+      - name: Run install.sh install on bare ubuntu-latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./install.sh local
+        run: ./install.sh install
 
-      - name: Smoke-check mise + key tools
-        run: |
-          export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
-          mise --version
-          node --version
-          python3 --version
-          uv --version
-          gitleaks version
+      - name: Check tools from a login shell
+        run: bash -l tests/integration/assert-tools.sh
+
+      - name: doctor (exit 0/1/2)
+        run: ./install.sh doctor || [ "$?" -le 2 ]
 
       - name: Open issue on failure
         if: failure()
@@ -187,31 +171,36 @@ jobs:
               });
             }
 
-  # 新規: macOS で setup-local-macos.sh を直接実行し、mise を入口にした共通フローが
-  # 緑であることを検証する。Docker Desktop / AI CLI は対象外（READMEの該当章参照）。
+  # macOS on GitHub-hosted Apple Silicon runners (Homebrew-based setup).
+  # Hosted runners currently offer macOS 26 only; macOS 27 is covered by the
+  # manual checklist (docs/manual-checklist.md) until a runner is available.
   canary-macos:
-    name: Canary (macOS, native install)
-    runs-on: macos-latest
-    timeout-minutes: 30
+    name: Canary (macOS 26, native install)
+    runs-on: macos-26
+    timeout-minutes: 40
     env:
       AGENTYARD_ASSUME_YES: "1"
+      AGENTYARD_OFFLINE: "1"
+      AGENTYARD_WITH: agents-md
       CI: "true"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Run install.sh local on macos-latest
+      - name: Run install.sh install on macOS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./install.sh local
+        run: ./install.sh install
 
-      - name: Smoke-check mise + key tools
+      - name: Check tools from a login shell (zsh)
+        shell: zsh -l {0}
         run: |
-          export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
-          mise --version
-          mise exec node@lts -- node --version
-          mise exec python -- python3 --version
-          mise exec uv -- uv --version
-          mise exec gitleaks -- gitleaks version
+          for t in git-lfs gh jq rg tree fzf fd mise node pnpm uv claude codex copilot agy; do
+            command -v "$t" >/dev/null || { echo "missing: $t"; exit 1; }
+          done
+          echo "all tools found"
+
+      - name: doctor (exit 0/1/2)
+        run: ./install.sh doctor || [ "$?" -le 2 ]
 
       - name: Open issue on failure
         if: failure()
@@ -230,8 +219,8 @@ jobs:
               ``,
               `## Triage checklist`,
               ``,
-              `- [ ] mise installer (mise.run) behavior change`,
-              `- [ ] mise plugin (node / python / uv / gitleaks) breaking change`,
+              `- [ ] Homebrew formula / cask renamed or deprecated`,
+              `- [ ] Agent installer behavior change (claude / codex / copilot / agy)`,
               `- [ ] macOS runner image upgrade broke a built-in tool`,
               ``,
               `Non-blocking: Canary failures do not gate main-line PRs.`,

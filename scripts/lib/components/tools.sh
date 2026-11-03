@@ -67,6 +67,8 @@ install_aws() {
   fi
   case "$(os_kind)" in
   linux)
+    # The installer verifies its signature with gpg (absent on minimal images).
+    apt_install gnupg || return 1
     if run_remote_installer https://awscli.amazonaws.com/v2/install.sh bash --quiet; then
       state_add component aws
       log_ok "AWS CLI を導入しました (~/.local/bin/aws)"

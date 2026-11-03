@@ -106,7 +106,7 @@ ensure_sudo() {
     if is_non_interactive; then
       die "非対話モードでは、パスワードなしで sudo を実行できる必要があります。"
     fi
-    log_info "管理者権限が必要です（sudo のパスワードを入力してください。以降は聞かれません）"
+    log_info "管理者権限が必要です（sudo のパスワードを入力してください）"
     sudo -v || die "sudo の認証に失敗しました。"
   fi
   _sudo_keepalive_start

@@ -77,7 +77,7 @@ Install order of preference: the tool's official method → the OS package manag
 | Antigravity CLI | ✓ | official installer (18+, supported countries) |
 | Gemini CLI | opt-in | npm package via mise (for Gemini Code Assist customers) |
 
-agentyard only installs agents; it never drives them. The selection screen links each agent's terms.
+agentyard only installs agents; it never drives them. Each agent asks you to accept its terms at the first login, except Antigravity CLI, whose terms apply from installation (agentyard shows a notice when it is selected).
 
 ### Opt-in (`AGENTYARD_WITH`)
 

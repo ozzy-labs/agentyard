@@ -77,7 +77,7 @@ bash install.sh
 | Antigravity CLI | ✓ | 公式インストーラ（18 歳以上、対応国） |
 | Gemini CLI | opt-in | npm パッケージを mise で管理（Gemini Code Assist 契約者向け） |
 
-agentyard はエージェントをインストールするだけで、操作はしません。選択画面に各エージェントの利用規約へのリンクを表示します。
+agentyard はエージェントをインストールするだけで、操作はしません。各エージェントの利用規約には最初のログイン時に同意します。ただし Antigravity CLI はインストールした時点で規約が適用されるため、選んだときに注意を表示します。
 
 ### opt-in（`AGENTYARD_WITH`）
 

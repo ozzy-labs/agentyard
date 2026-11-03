@@ -265,24 +265,12 @@ select_components() {
   for id in $SELECTED; do printf '  - %s\n' "$(registry_label "$id")"; done
 }
 
-# Print terms-of-service notices for selected agents.
+# Install-time notices. Most agents ask users to accept their terms at the
+# first login, so only Antigravity CLI (whose terms state that installing it
+# means agreeing) gets a notice here. Account requirements are shown in the
+# selection labels.
 print_agent_notices() {
-  local id any=0
-  for id in $SELECTED; do
-    [ "$(registry_group "$id")" = "agent" ] || continue
-    if [ "$any" = "0" ]; then
-      log_section "AI エージェントの利用条件"
-      any=1
-    fi
-    case "$id" in
-    claude) printf '  - Claude Code: Anthropic のアカウントまたは API キーが必要。規約: https://www.anthropic.com/legal/consumer-terms\n' ;;
-    codex) printf '  - Codex CLI: ChatGPT のアカウントまたは OpenAI API キーが必要。規約: https://openai.com/policies/terms-of-use\n' ;;
-    copilot) printf '  - GitHub Copilot CLI: 有効な GitHub Copilot 契約が必要。規約: https://docs.github.com/site-policy/github-terms/github-terms-for-additional-products-and-features\n' ;;
-    antigravity) printf '  - Antigravity CLI: 18 歳以上・対応国の Google アカウントが必要。利用データの収集が既定で有効（設定で無効化可）。規約: https://antigravity.google/terms\n' ;;
-    gemini) printf '  - Gemini CLI: Gemini Code Assist Standard / Enterprise 契約者向け（個人は Antigravity CLI へ移行済み）。規約: https://geminicli.com/docs/\n' ;;
-    esac
-  done
-  if [ "$any" = "1" ]; then
-    printf '  インストールすると、各エージェントの利用規約に同意したものとみなされます。\n'
-  fi
+  selected antigravity || return 0
+  printf '\n'
+  log_info "Antigravity CLI は、インストールした時点で利用規約に同意したものとみなされます（利用データの収集が既定で有効。設定で無効にできます）: https://antigravity.google/terms"
 }

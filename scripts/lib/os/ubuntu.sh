@@ -138,11 +138,51 @@ ubuntu_base_tools() {
     log_ok "fd -> fdfind のシンボリックリンクを作成しました"
   fi
 
-  # GitHub CLI from the official apt repository.
-  # https://github.com/cli/cli/blob/trunk/docs/install_linux.md
-  if ! has_cmd gh || state_has apt-repo github-cli; then
-    apt_repo_add github-cli https://cli.github.com/packages stable main \
-      https://cli.github.com/packages/githubcli-archive-keyring.gpg githubcli-archive-keyring.gpg
+  ubuntu_install_gh
+}
+
+# apt_pkg_version <pkg>: installed version, empty when not installed via dpkg.
+apt_pkg_version() {
+  apt_pkg_installed "$1" || return 0
+  dpkg-query -W -f='${Version}' "$1" 2>/dev/null
+}
+
+# GitHub CLI from the official apt repository (ADR-0007 §4).
+# https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+# Ubuntu's own `gh` package is far behind upstream (24.04: 2.45, 26.04: 2.46)
+# and lacks commands such as `gh attestation`. When it is installed, offer to
+# replace it with the official build (same package name, newer version).
+ubuntu_install_gh() {
+  local official=0
+  if state_has apt-repo github-cli || apt_uri_registered_elsewhere https://cli.github.com/packages; then
+    official=1
   fi
-  apt_install gh
+  if [ "$official" = "0" ] && has_cmd gh && ! apt_pkg_installed gh; then
+    log_skip "gh は apt 以外の方法で導入されています（$(command -v gh)）"
+    return 0
+  fi
+  if [ "$official" = "0" ] && apt_pkg_installed gh; then
+    log_warn "Ubuntu 標準のリポジトリの gh $(apt_pkg_version gh) が入っています。公式版より大幅に古く、gh attestation などが使えません。"
+    if ! ask_yes_no "GitHub 公式の apt リポジトリを登録して、公式版に更新しますか？" y; then
+      log_skip "gh は Ubuntu 標準の版のままにします"
+      return 0
+    fi
+  fi
+  apt_repo_add github-cli https://cli.github.com/packages stable main \
+    https://cli.github.com/packages/githubcli-archive-keyring.gpg githubcli-archive-keyring.gpg || return 1
+  if apt_pkg_installed gh; then
+    local before after
+    before="$(apt_pkg_version gh)"
+    apt_update_once
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --only-upgrade gh >/dev/null ||
+      log_warn "gh の更新に失敗しました"
+    after="$(apt_pkg_version gh)"
+    if [ "$before" != "$after" ]; then
+      log_ok "gh を更新しました（$before → $after）"
+    else
+      log_skip "gh (apt)"
+    fi
+  else
+    apt_install gh
+  fi
 }

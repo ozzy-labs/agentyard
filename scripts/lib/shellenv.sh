@@ -67,8 +67,8 @@ else
   _agentyard_shell=""
 fi
 if [ -n "$_agentyard_shell" ]; then
-  if [ -x "$HOME/.local/bin/mise" ]; then
-    eval "$("$HOME/.local/bin/mise" activate "$_agentyard_shell")"
+  if command -v mise >/dev/null 2>&1; then
+    eval "$(mise activate "$_agentyard_shell")"
   fi
   # fzf key bindings: built-in integration (fzf >= 0.48), else the files
   # shipped by the Ubuntu 24.04 package (fzf 0.44).

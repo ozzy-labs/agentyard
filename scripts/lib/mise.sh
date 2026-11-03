@@ -6,6 +6,16 @@
 # Requires lib/core.sh, lib/state.sh.
 
 MISE_BIN="${MISE_BIN:-$HOME/.local/bin/mise}"
+# A mise installed some other way (mise apt repo, Homebrew, ...) is reused
+# instead of installing a second copy.
+if [ ! -x "$MISE_BIN" ] && command -v mise >/dev/null 2>&1; then
+  MISE_BIN="$(command -v mise)"
+fi
+
+# True when mise came from the official installer (self-update applies).
+mise_is_official_install() {
+  [ "$MISE_BIN" = "$HOME/.local/bin/mise" ]
+}
 AGENTYARD_TOOLS_FILE="${AGENTYARD_TOOLS_FILE:-}"
 
 # tools_version <name>  -> version spec from config/tools.toml
@@ -27,11 +37,16 @@ mise_at_home() {
 
 ensure_mise() {
   if [ -x "$MISE_BIN" ]; then
-    log_skip "mise は導入済みです ($("$MISE_BIN" --version 2>/dev/null | head -n1))"
+    if mise_is_official_install; then
+      log_skip "mise は導入済みです ($("$MISE_BIN" --version 2>/dev/null | head -n1))"
+    else
+      log_skip "mise は $MISE_BIN にあります（その入れ方で更新してください）"
+    fi
     return 0
   fi
   log_info "mise を公式インストーラで導入します"
   run_remote_installer https://mise.run sh >/dev/null || die "mise のインストールに失敗しました"
+  MISE_BIN="$HOME/.local/bin/mise"
   state_add component mise
   log_ok "mise を導入しました"
 }

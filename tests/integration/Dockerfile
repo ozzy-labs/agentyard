@@ -16,8 +16,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Only what a fresh host needs before agentyard runs: sudo (the image runs
 # as root otherwise). agentyard installs ca-certificates / curl itself, but
 # fetching the repository requires curl, so the image provides it.
+# Ubuntu's own (old) `gh` is preinstalled on purpose: agentyard must replace
+# it with the official build (assert-tools.sh checks `gh attestation`).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl sudo \
+    && apt-get install -y --no-install-recommends ca-certificates curl sudo gh \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --shell /bin/bash testuser \

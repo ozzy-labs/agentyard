@@ -104,7 +104,11 @@ _agents_md_link_or_reference() {
     return 0
   fi
   block_upsert "$file" "Also read and follow the user's shared instructions in ~/.agents/AGENTS.md." md
-  log_ok "$file に参照を追記しました（読み込みはエージェント次第）"
+  if [ "$BLOCK_CHANGED" = "1" ]; then
+    log_ok "$file に参照を追記しました（読み込みはエージェント次第）"
+  else
+    log_skip "$file には参照を追記済みです"
+  fi
 }
 
 agents_md_wire() {
@@ -114,7 +118,11 @@ agents_md_wire() {
 
   if agent_present claude; then
     block_upsert "$claude_dir/CLAUDE.md" "@~/.agents/AGENTS.md" md
-    log_ok "Claude Code: $claude_dir/CLAUDE.md から読み込み"
+    if [ "$BLOCK_CHANGED" = "1" ]; then
+      log_ok "Claude Code: $claude_dir/CLAUDE.md から読み込み"
+    else
+      log_skip "Claude Code: 連携済みです"
+    fi
   fi
 
   if agent_present codex; then
@@ -132,7 +140,11 @@ agents_md_wire() {
       log_skip "Antigravity CLI: ~/.gemini/GEMINI.md 経由で読み込まれます（二重読み込みを防ぐため追加しません）"
     else
       block_upsert "$gemini_dir/AGENTS.md" "@[agentyard](~/.agents/AGENTS.md)" md
-      log_ok "Antigravity CLI: $gemini_dir/AGENTS.md から読み込み"
+      if [ "$BLOCK_CHANGED" = "1" ]; then
+        log_ok "Antigravity CLI: $gemini_dir/AGENTS.md から読み込み"
+      else
+        log_skip "Antigravity CLI: 連携済みです"
+      fi
     fi
   fi
 

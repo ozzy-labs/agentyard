@@ -272,3 +272,14 @@ _fake_os_release() {
   mkdir -p "$HOME/src/c/.git"
   [ "$(_mise_trust_candidates)" = "~/repos,~/src" ]
 }
+
+@test "block: BLOCK_CHANGED reports whether the file changed" {
+  f="$HOME/.bashrc"
+  printf 'a\n' >"$f"
+  block_upsert "$f" "x"
+  [ "$BLOCK_CHANGED" = "1" ]
+  block_upsert "$f" "x"
+  [ "$BLOCK_CHANGED" = "0" ]
+  block_upsert "$f" "y"
+  [ "$BLOCK_CHANGED" = "1" ]
+}

@@ -52,8 +52,11 @@ configure_git() {
   fi
 
   if has_cmd git-lfs; then
-    # Only sets the lfs filters when not already set (git-lfs docs).
-    git lfs install --skip-repo >/dev/null 2>&1 && log_ok "git lfs install --skip-repo"
+    if _git_has filter.lfs.process; then
+      log_skip "git-lfs は設定済みです"
+    else
+      git lfs install --skip-repo >/dev/null 2>&1 && log_ok "git lfs install --skip-repo"
+    fi
   fi
 }
 

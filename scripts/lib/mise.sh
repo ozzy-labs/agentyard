@@ -48,6 +48,10 @@ mise_global() {
       log_skip "$tool は mise のグローバル設定に既にあります（ユーザー設定を優先）"
       return 0
     fi
+    if [ "$(state_get mise "$tool" 3)" = "$spec" ]; then
+      log_skip "$tool@$spec (mise)"
+      return 0
+    fi
   fi
   if quiet_run mise_at_home use --global "$tool@$spec"; then
     state_add mise "$tool" "$spec"

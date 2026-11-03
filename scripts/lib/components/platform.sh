@@ -56,9 +56,10 @@ EOF
 # WSL: tiny BROWSER wrapper (wslu is not available on Ubuntu 26.04).
 install_wsl_browser() {
   log_section "WSL のブラウザ連携"
-  local wrapper="$HOME/.local/bin/agentyard-wsl-browser"
+  local wrapper="$HOME/.local/bin/agentyard-wsl-browser" tmp
   mkdir -p "$HOME/.local/bin"
-  cat >"$wrapper" <<'EOF'
+  tmp="$(mktemp)"
+  cat >"$tmp" <<'EOF'
 #!/bin/sh
 # Managed by agentyard. Opens URLs in the Windows default browser from WSL.
 for exe in /mnt/c/Windows/explorer.exe "$(command -v explorer.exe 2>/dev/null)"; do
@@ -70,6 +71,13 @@ done
 echo "explorer.exe が見つかりません。URL を手動で開いてください: $1" >&2
 exit 1
 EOF
+  if [ -x "$wrapper" ] && cmp -s "$tmp" "$wrapper" && state_has setting wsl-browser; then
+    rm -f "$tmp"
+    log_skip "WSL のブラウザ連携は設定済みです"
+    return 0
+  fi
+  cat "$tmp" >"$wrapper"
+  rm -f "$tmp"
   chmod +x "$wrapper"
   state_add created "$wrapper"
   state_add setting wsl-browser 1

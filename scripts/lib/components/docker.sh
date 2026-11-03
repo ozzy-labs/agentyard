@@ -57,7 +57,11 @@ _docker_linux() {
     https://download.docker.com/linux/ubuntu/gpg docker.asc || return 1
   apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || return 1
   if systemd_running; then
-    sudo systemctl enable --now docker >/dev/null 2>&1 && log_ok "docker サービスを有効化しました"
+    if systemctl is-enabled --quiet docker 2>/dev/null && systemctl is-active --quiet docker 2>/dev/null; then
+      log_skip "docker サービスは有効です"
+    else
+      sudo systemctl enable --now docker >/dev/null 2>&1 && log_ok "docker サービスを有効化しました"
+    fi
   fi
   state_add component docker
   _docker_group_consent

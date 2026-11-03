@@ -86,9 +86,20 @@ EOF
 
 # Write env.sh / interactive.sh (regenerated every run).
 shellenv_write_files() {
+  local tmp
   mkdir -p "$AGENTYARD_CONFIG_DIR"
-  shellenv_render_env >"$(shellenv_env_path)"
-  shellenv_render_interactive >"$(shellenv_interactive_path)"
+  tmp="$(mktemp)"
+  shellenv_render_env >"$tmp"
+  cmp -s "$tmp" "$(shellenv_env_path)" 2>/dev/null || {
+    cat "$tmp" >"$(shellenv_env_path)"
+    SHELLENV_CHANGED=1
+  }
+  shellenv_render_interactive >"$tmp"
+  cmp -s "$tmp" "$(shellenv_interactive_path)" 2>/dev/null || {
+    cat "$tmp" >"$(shellenv_interactive_path)"
+    SHELLENV_CHANGED=1
+  }
+  rm -f "$tmp"
 }
 
 _shellenv_env_line() {
@@ -113,6 +124,13 @@ _shellenv_linux_bash_login() {
 }
 
 # Wire managed blocks into the rc files of shells present on this host.
+SHELLENV_CHANGED=0
+_shellenv_upsert() {
+  block_upsert "$1" "$2"
+  [ "$BLOCK_CHANGED" = "1" ] && SHELLENV_CHANGED=1
+  return 0
+}
+
 shellenv_wire_rc_files() {
   local env_line interactive_line
   env_line="$(_shellenv_env_line)"
@@ -120,23 +138,23 @@ shellenv_wire_rc_files() {
 
   case "$(os_kind)" in
   linux)
-    block_upsert "$(_shellenv_linux_bash_login)" "$env_line"
-    block_upsert "$HOME/.bashrc" "$interactive_line"
+    _shellenv_upsert "$(_shellenv_linux_bash_login)" "$env_line"
+    _shellenv_upsert "$HOME/.bashrc" "$interactive_line"
     if has_cmd zsh; then
-      block_upsert "$HOME/.zprofile" "$env_line"
-      block_upsert "$HOME/.zshrc" "$interactive_line"
+      _shellenv_upsert "$HOME/.zprofile" "$env_line"
+      _shellenv_upsert "$HOME/.zshrc" "$interactive_line"
     fi
     ;;
   macos)
     # zsh is the default shell on macOS.
-    block_upsert "$HOME/.zprofile" "$env_line"
-    block_upsert "$HOME/.zshrc" "$interactive_line"
+    _shellenv_upsert "$HOME/.zprofile" "$env_line"
+    _shellenv_upsert "$HOME/.zshrc" "$interactive_line"
     # bash only when the user already uses it.
     if [ -f "$HOME/.bash_profile" ]; then
-      block_upsert "$HOME/.bash_profile" "$env_line"
+      _shellenv_upsert "$HOME/.bash_profile" "$env_line"
     fi
     if [ -f "$HOME/.bashrc" ]; then
-      block_upsert "$HOME/.bashrc" "$interactive_line"
+      _shellenv_upsert "$HOME/.bashrc" "$interactive_line"
     fi
     ;;
   esac
@@ -144,7 +162,12 @@ shellenv_wire_rc_files() {
 
 shellenv_setup() {
   log_section "シェル設定"
+  SHELLENV_CHANGED=0
   shellenv_write_files
   shellenv_wire_rc_files
-  log_ok "env.sh / interactive.sh を更新し、シェル設定ファイルにブロックを追加しました"
+  if [ "$SHELLENV_CHANGED" = "1" ]; then
+    log_ok "env.sh / interactive.sh とシェル設定ファイルのブロックを更新しました"
+  else
+    log_skip "シェル設定は最新です"
+  fi
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/ozzy-labs/agentyard/compare/v0.5.0...v0.5.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* replace outdated distro tools with the officially prescribed builds ([#201](https://github.com/ozzy-labs/agentyard/issues/201)) ([a8fc963](https://github.com/ozzy-labs/agentyard/commit/a8fc963aee83204a575acf41ba7833d5808618df))
+
 ## [0.5.0](https://github.com/ozzy-labs/agentyard/compare/v0.4.0...v0.5.0) (2026-11-03)
 
 

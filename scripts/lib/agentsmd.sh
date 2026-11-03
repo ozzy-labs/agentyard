@@ -27,14 +27,15 @@ _agents_md_template() {
 <!--
 Personal instructions shared by all your AI coding agents
 (Claude Code, Codex, Copilot CLI, Antigravity CLI, Gemini CLI).
-Write your preferences above the agentyard block, for example:
-
-- Preferred language for replies
-- Commit message conventions
-- Things agents must never do
-
-agentyard only manages the block at the end of this file.
+Write them under "My instructions" below. Text inside HTML comments like
+this one is ignored by agents. agentyard only manages the block at the end
+of this file.
 -->
+
+## My instructions
+
+<!-- Examples: preferred reply language, commit message conventions, things agents must never do. -->
+
 EOF
 }
 

@@ -1,0 +1,122 @@
+#!/bin/bash
+# scripts/lib/agents.sh
+# AI agent CLIs (ADR-0007 §4). Always latest; installed with each vendor's
+# officially recommended method. agentyard only installs agents and never
+# drives them (Antigravity's terms forbid third-party tools accessing it).
+#
+#   claude       https://code.claude.com/docs/en/setup            (auto-updates)
+#   codex        https://learn.chatgpt.com/docs/codex/cli         (update: rerun installer)
+#   copilot      https://docs.github.com/en/copilot/how-tos/copilot-cli (update: copilot update)
+#   antigravity  https://antigravity.google/download              (auto-updates)
+#   gemini       https://geminicli.com/docs/get-started/installation
+#                npm package, installed through mise's npm backend so it
+#                does not disappear when the Node version changes. The brew
+#                formula is deprecated (2026-06-18).
+# Requires lib/core.sh, lib/state.sh, lib/mise.sh.
+
+agent_bin() {
+  case "$1" in
+  claude) printf 'claude' ;;
+  codex) printf 'codex' ;;
+  copilot) printf 'copilot' ;;
+  antigravity) printf 'agy' ;;
+  gemini) printf 'gemini' ;;
+  esac
+}
+
+agent_label() {
+  case "$1" in
+  claude) printf 'Claude Code' ;;
+  codex) printf 'Codex CLI' ;;
+  copilot) printf 'GitHub Copilot CLI' ;;
+  antigravity) printf 'Antigravity CLI' ;;
+  gemini) printf 'Gemini CLI' ;;
+  esac
+}
+
+# True when the agent's binary is on PATH (ignoring VS Code's copilot shim).
+agent_present() {
+  local bin path
+  bin="$(agent_bin "$1")"
+  path="$(command -v "$bin" 2>/dev/null)" || return 1
+  case "$path" in *".vscode-server"*) return 1 ;; esac
+  return 0
+}
+
+# Agents installed via npm under a mise-managed Node (agentyard <= v0.4.x).
+_agent_npm_legacy_path() {
+  local path
+  path="$(command -v "$(agent_bin "$1")" 2>/dev/null)" || return 1
+  case "$path" in
+  */mise/installs/node/* | */mise/shims/*) return 0 ;;
+  esac
+  return 1
+}
+
+_agent_install() {
+  case "$1" in
+  claude) run_remote_installer https://claude.ai/install.sh bash ;;
+  codex) run_remote_installer https://chatgpt.com/codex/install.sh sh ;;
+  copilot) run_remote_installer https://gh.io/copilot-install bash ;;
+  antigravity) run_remote_installer https://antigravity.google/cli/install.sh bash ;;
+  gemini) mise_global "npm:@google/gemini-cli" latest ;;
+  esac
+}
+
+install_agent() {
+  local id="$1" label
+  label="$(agent_label "$id")"
+  if agent_present "$id"; then
+    if [ "$id" = "codex" ] && _agent_npm_legacy_path codex; then
+      log_warn "$label は npm（mise の Node 配下）で入っています。Node を更新すると消えるため、公式インストーラへの切り替えを推奨します: npm uninstall -g @openai/codex && agentyard を再実行"
+    fi
+    log_skip "$label は導入済みです"
+    return 0
+  fi
+  log_info "$label を公式の方法で導入します"
+  if _agent_install "$id" >/dev/null 2>&1; then
+    session_path_setup
+    hash -r 2>/dev/null || true
+    state_add agent "$id"
+    log_ok "$label を導入しました"
+  else
+    log_error "$label のインストールに失敗しました"
+    return 1
+  fi
+}
+
+install_agents() {
+  log_section "AI エージェント"
+  local id failed=0
+  for id in claude codex copilot antigravity gemini; do
+    selected "$id" || continue
+    install_agent "$id" || failed=1
+  done
+  return "$failed"
+}
+
+# Update agents that do not auto-update. Only agentyard-installed ones.
+update_agents() {
+  local id
+  for id in $(state_list agent); do
+    agent_present "$id" || continue
+    case "$id" in
+    codex)
+      log_info "Codex CLI を更新します（公式インストーラを再実行）"
+      (
+        export CODEX_NON_INTERACTIVE=1
+        run_remote_installer https://chatgpt.com/codex/install.sh sh >/dev/null
+      ) && log_ok "Codex CLI" || log_warn "Codex CLI の更新に失敗しました"
+      ;;
+    copilot)
+      copilot update >/dev/null 2>&1 && log_ok "GitHub Copilot CLI" || log_warn "GitHub Copilot CLI の更新に失敗しました"
+      ;;
+    gemini)
+      mise_at_home upgrade "npm:@google/gemini-cli" >/dev/null 2>&1 && log_ok "Gemini CLI" || log_warn "Gemini CLI の更新に失敗しました"
+      ;;
+    claude | antigravity)
+      log_skip "$(agent_label "$id") は自動更新されます"
+      ;;
+    esac
+  done
+}

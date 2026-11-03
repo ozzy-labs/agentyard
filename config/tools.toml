@@ -1,0 +1,16 @@
+# Tool versions installed by agentyard via mise (ADR-0007 §4).
+# mise config format so Renovate's mise manager can update the pins
+# (see renovate.json). Scripts read this file; keep one `name = "version"`
+# per line under [tools].
+#
+# - node / uv / bun: ranges (core / aqua backends)
+# - pnpm: major version; major bumps are reviewed via Renovate PRs
+# - other tools: exact versions, updated by Renovate and verified in CI
+[tools]
+node = "lts"
+pnpm = "10"
+uv = "latest"
+bun = "1"
+zellij = "0.45.1"
+ast-grep = "0.51.1"
+yq = "4.54.1"

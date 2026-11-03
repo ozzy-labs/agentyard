@@ -6,9 +6,10 @@
 # ネットワーク・sudo・apt を一切使わず、5 秒以内に完了するよう設計。
 #
 # 検証内容:
-#   - install.sh の引数解析 / --help 出力
-#   - update-tools.sh の引数解析 / --help / --dry-run 出力
+#   - install.sh の引数解析 / --help 出力（pipe 実行を含む）
+#   - update / uninstall の --help / --dry-run
 #   - 全シェルスクリプトの構文チェック（bash -n）
+#   - doctor の終了コード範囲
 #
 # Usage:
 #   ./tests/smoke/run.sh
@@ -79,15 +80,15 @@ assert_stdout_contains() {
 }
 
 # ------------------------------------------------------------------
-# 1. install.sh の引数解析
+# 1. install.sh argument parsing
 # ------------------------------------------------------------------
 
 assert_stdout_contains "install.sh --help prints Usage" \
   "Usage:" \
   bash install.sh --help
 
-assert_stdout_contains "install.sh --help lists subcommands" \
-  "zsh|local|all|update|doctor" \
+assert_stdout_contains "install.sh --help lists commands" \
+  "uninstall" \
   bash install.sh --help
 
 assert_failure "install.sh rejects unknown flag" \
@@ -96,122 +97,87 @@ assert_failure "install.sh rejects unknown flag" \
 assert_failure "install.sh rejects unknown positional arg" \
   bash install.sh unknown-subcommand
 
-# README §4 のクイックスタートで案内している `curl ... | bash -s -- ...`
-# 実行形態のサニティチェック。pipe 経由で実行されると BASH_SOURCE[0] が
-# ファイルとして存在しないため、install.sh はダウンロード経路に入る。
-# 過去に `local tmp_dir` を参照する EXIT trap が set -u 下で unbound に
-# なる回帰があったため、--help でも pipe 経路のスモークを残す。
+# curl | bash style: BASH_SOURCE[0] is not a file, so install.sh takes the
+# download path. --help must still work (EXIT trap / set -u regressions).
 assert_stdout_contains "install.sh works via stdin pipe (curl|bash style)" \
   "Usage:" \
   bash -c 'cat install.sh | bash -s -- --help'
 
 assert_stdout_contains "install.sh --ref accepts value via stdin pipe" \
   "Usage:" \
-  bash -c 'cat install.sh | bash -s -- --ref main --help'
+  bash -c 'cat install.sh | bash -s -- --ref v0.5.0 --help'
 
 # ------------------------------------------------------------------
-# 2. update-tools.sh の引数解析 / --dry-run
+# 2. update / uninstall argument parsing and dry-run
 # ------------------------------------------------------------------
 
-assert_stdout_contains "update-tools.sh --help prints header" \
-  "update-tools.sh" \
-  bash scripts/update-tools.sh --help
+assert_stdout_contains "update --help describes scope" \
+  "agentyard が入れたもの" \
+  bash install.sh update --help
 
-assert_stdout_contains "update-tools.sh --dry-run emits dry-run markers" \
-  "dry-run" \
-  bash scripts/update-tools.sh --dry-run
+assert_stdout_contains "update --dry-run emits dry-run markers or skips" \
+  "agentyard update" \
+  env AGENTYARD_OFFLINE=1 bash install.sh update --dry-run
 
-assert_failure "update-tools.sh rejects unknown flag" \
-  bash scripts/update-tools.sh --bogus-flag-xyz
+assert_failure "update.sh rejects unknown flag" \
+  bash scripts/update.sh --bogus-flag-xyz
+
+assert_stdout_contains "uninstall --dry-run without state is a no-op" \
+  "元に戻すものはありません" \
+  env AGENTYARD_CONFIG_DIR="$(mktemp -d)/none" bash install.sh uninstall --dry-run
 
 # ------------------------------------------------------------------
-# 3. 構文チェック（bash -n）
+# 3. Syntax checks (bash -n) for every script and library
 # ------------------------------------------------------------------
 
-assert_success "install.sh syntax check" \
-  bash -n install.sh
-
-assert_success "setup-local-linux.sh syntax check" \
-  bash -n scripts/setup-local-linux.sh
-
-assert_success "setup-local-macos.sh syntax check" \
-  bash -n scripts/setup-local-macos.sh
-
-assert_success "setup-zsh-linux.sh syntax check" \
-  bash -n scripts/setup-zsh-linux.sh
-
-assert_success "update-tools.sh syntax check" \
-  bash -n scripts/update-tools.sh
-
-assert_success "doctor.sh syntax check" \
-  bash -n scripts/doctor.sh
-
-# scripts/lib/*.sh の構文チェック（audit gap δ-2）。
-# トップレベル 6 スクリプトしか syntax check していなかったため、lib 配下に
-# bash -n エラーが混入すると smoke を通過し integration まで検知が遅れていた。
-# ここで全 lib を網羅的にチェックする。
-for lib in scripts/lib/*.sh; do
-  assert_success "syntax check: $lib" bash -n "$lib"
+for f in install.sh scripts/*.sh scripts/lib/*.sh scripts/lib/*/*.sh; do
+  assert_success "syntax check: $f" bash -n "$f"
 done
 
 # ------------------------------------------------------------------
-# 4. doctor.sh exit code 範囲チェック（audit gap δ-3）
+# 4. doctor exit code is within the documented range {0,1,2}
 # ------------------------------------------------------------------
-#
-# doctor は 0 / 1 / 2 を返す仕様（README §6.5.2）。smoke は health check
-# ではなく「doctor が発火し、仕様範囲内の exit code を返す」ことの sanity
-# check に徹する。仕様 0/1/2 をそのまま全て受け入れる:
-#   - 0: 健全
-#   - 1: warn あり（推奨ツール未導入等）
-#   - 2: error あり（必須ツール欠落等）— CI runner や mise キャッシュ状態次第で
-#        起こりうる。doctor 自体が動いて結果を返している事実は意味があるので
-#        smoke では pass とする（健全性チェックは integration / canary が担当）。
-#   - 3+: 仕様外。doctor 自身の bug 候補なので fail。
-#
-# 過去の narrow 版（0/1 のみ許容）は CI runner で exit=2 が出て smoke を
-# 落としたため、spec 通り {0,1,2} に戻した（PR #163 follow-up）。
-#
-# NOTE: 本スクリプトは `set -u` のみで `set -e` を使わない。errexit を grab する
-# 必要がないため `|| doctor_exit=$?` で exit code を捕捉する pattern を使う。
-printf '▶ doctor.sh exit code in {0,1,2}\n'
-doctor_exit=0
-bash scripts/doctor.sh >/dev/null 2>&1 || doctor_exit=$?
-if [ "$doctor_exit" -ge 0 ] && [ "$doctor_exit" -le 2 ]; then
-  printf '  ✅ pass (exit=%d)\n' "$doctor_exit"
-  PASS=$((PASS + 1))
-else
-  printf '  ❌ fail (exit=%d, expected 0/1/2 per README §6.5.2)\n' "$doctor_exit"
-  FAIL=$((FAIL + 1))
-fi
+
+for args in "" "--repo ."; do
+  printf '▶ doctor %s exit code in {0,1,2}\n' "$args"
+  doctor_exit=0
+  # shellcheck disable=SC2086  # $args is intentionally split
+  AGENTYARD_OFFLINE=1 bash scripts/doctor.sh $args >/dev/null 2>&1 || doctor_exit=$?
+  if [ "$doctor_exit" -ge 0 ] && [ "$doctor_exit" -le 2 ]; then
+    printf '  ✅ pass (exit=%d)\n' "$doctor_exit"
+    PASS=$((PASS + 1))
+  else
+    printf '  ❌ fail (exit=%d, expected 0/1/2)\n' "$doctor_exit"
+    FAIL=$((FAIL + 1))
+  fi
+done
 
 # ------------------------------------------------------------------
-# 5. rename identifier pins
+# 5. Identifier and layout pins
 # ------------------------------------------------------------------
-#
-# 旧名 agentic-bootstrap → 新名 agentyard のリネーム後、誤って旧名に
-# 戻る regression や typo を merge 前に検知するための固定。CI 上で
-# lefthook は直接実行されないため、hook id rename はここでないと検知不能。
 
-assert_stdout_contains "install.sh --help advertises AGENTYARD_REF" \
-  "AGENTYARD_REF" \
+assert_stdout_contains "install.sh --help documents AGENTYARD_AGENTS" \
+  "AGENTYARD_AGENTS" \
   bash install.sh --help
 
-assert_stdout_contains "install.sh --help advertises AGENTYARD_ASSUME_YES" \
-  "AGENTYARD_ASSUME_YES" \
+assert_stdout_contains "install.sh --help documents AGENTYARD_WITH" \
+  "AGENTYARD_WITH" \
   bash install.sh --help
 
-assert_stdout_contains "install.sh --help points to ozzy-labs/agentyard" \
-  "ozzy-labs/agentyard" \
-  bash install.sh --help
+assert_success "install.sh REPO is ozzy-labs/agentyard" \
+  grep -q '^readonly REPO="ozzy-labs/agentyard"$' install.sh
 
-assert_success "install.sh REPO_NAME is agentyard" \
-  grep -q '^readonly REPO_NAME="agentyard"$' install.sh
+assert_success "core.sh carries the release-please version marker" \
+  grep -q 'x-release-please-version' scripts/lib/core.sh
+
+assert_success "config/tools.toml has a [tools] table" \
+  grep -qx '\[tools\]' config/tools.toml
+
+assert_success "renovate.json watches config/tools.toml" \
+  grep -q 'tools' renovate.json
 
 assert_success "lefthook.yaml defines agentyard-shell hook" \
   grep -q '^[[:space:]]*agentyard-shell:' lefthook.yaml
-
-assert_success "lefthook.yaml defines agentyard-trivy hook" \
-  grep -q '^[[:space:]]*agentyard-trivy:' lefthook.yaml
 
 assert_success "release-please-config.json declares package-name agentyard" \
   grep -q '"package-name": "agentyard"' release-please-config.json

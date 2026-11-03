@@ -1,212 +1,173 @@
 #!/usr/bin/env bash
+# agentyard installer / dispatcher (ADR-0007).
+#
+#   ./install.sh [install|update|doctor|uninstall] [options]
+#   curl --proto '=https' --tlsv1.2 -fsSL \
+#     https://github.com/ozzy-labs/agentyard/releases/latest/download/install.sh | bash
+#
+# Remote runs download the release archive (agentyard.tar.gz) attached to a
+# GitHub release and verify its SHA-256 before extracting it.
 set -euo pipefail
 
-readonly REPO_OWNER="ozzy-labs"
-readonly REPO_NAME="agentyard"
-readonly DEFAULT_REF="${AGENTYARD_REF:-${AGENTIC_BOOTSTRAP_REF:-${BOOTSTRAP_REF:-main}}}"
-
-# OS 判定: install.sh local / all が dispatch 先のスクリプトを切り替えるために使う
-detect_os() {
-  case "$(uname -s)" in
-  Linux*) printf 'linux' ;;
-  Darwin*) printf 'darwin' ;;
-  *) printf 'unknown' ;;
-  esac
-}
+readonly REPO="ozzy-labs/agentyard"
+readonly ASSET="agentyard.tar.gz"
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./install.sh [zsh|local|all|update|doctor] [--ref <git-ref>] [--auto|--interactive]
-  curl -fsSL https://raw.githubusercontent.com/ozzy-labs/agentyard/main/install.sh | bash -s -- [zsh|local|all|update|doctor] [--ref <git-ref>] [--auto|--interactive]
+  ./install.sh [command] [options]
 
 Commands:
-  zsh     Run scripts/setup-zsh-linux.sh (Linux/WSL only; macOS skips with a notice)
-  local   Run the host setup script for the detected OS
-            - Linux  → scripts/setup-local-linux.sh
-            - macOS  → scripts/setup-local-macos.sh
-  all     Run zsh setup (when supported) + local setup in order (default)
-  update  Run scripts/update-tools.sh (batch-update mise/uv/npm managed tools)
-  doctor  Run scripts/doctor.sh (diagnose environment integrity, exit 0/1/2)
+  install            Set up this host (default)
+  update [--dry-run] Update what agentyard installed
+  doctor [--repo P]  Diagnose the host, or whether agents read P/AGENTS.md
+  uninstall          Revert the settings agentyard wrote (tools are kept)
+  (legacy aliases: local, all -> install; zsh -> install with zsh)
 
 Options:
-  --ref <git-ref>  Download scripts from the specified branch, tag, or commit
-  -y, --auto       Apply recommended settings without prompts (non-interactive)
-  --interactive    Confirm settings interactively (default)
-  -h, --help       Show this help message
+  --ref <ref>   Release tag to download (e.g. v0.5.0). Default: latest release.
+                A branch name (e.g. main) downloads the source archive
+                without checksum verification (for development only).
+  -y, --auto    Non-interactive: AGENTYARD_ASSUME_YES=1
+  --interactive Force interactive prompts
+  -h, --help    Show this help
 
-Environment:
-  AGENTYARD_REF          Default git ref to download when running remotely
-                         (legacy: AGENTIC_BOOTSTRAP_REF, BOOTSTRAP_REF are honored as fallbacks)
-  AGENTYARD_ASSUME_YES   1 = non-interactive, auto-accept "default Y" prompts and
-                         skip "default N" prompts. CI=true also forces this on.
-                         (legacy: AGENTIC_BOOTSTRAP_ASSUME_YES, BOOTSTRAP_ASSUME_YES
-                         are honored as fallbacks; set via -y/--auto/--interactive too)
-  SETUP_LOG              Passed through to the underlying setup/update script(s)
+Environment (non-interactive selection):
+  AGENTYARD_AGENTS   claude,codex,copilot,antigravity,gemini
+                     (default: claude,codex,copilot,antigravity)
+  AGENTYARD_WITH     docker,zsh,tmux,zellij,aws,azure,gcloud,ast-grep,yq,
+                     markitdown,bun,agents-md,mise-trust,wsl-browser,apparmor
+                     ("power" = ast-grep,yq,markitdown)
+  AGENTYARD_DOCKER_GROUP=1        add the user to the docker group
+  AGENTYARD_MISE_TRUSTED_PATHS    directories for mise-trust (comma separated)
+  AGENTYARD_MACOS_DOCKER          docker-desktop | orbstack | colima
+  AGENTYARD_ALLOW_UNSUPPORTED=1   continue on unsupported platforms
+  AGENTYARD_UI=plain              numbered list instead of whiptail
+  SETUP_LOG=1                     tee output to ~/agentyard-setup-*.log
 EOF
 }
 
-log() {
-  printf '%s\n' "$*"
-}
-
+log() { printf '%s\n' "$*"; }
 die() {
   printf 'Error: %s\n' "$*" >&2
   exit 1
 }
 
-require_command() {
-  command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
+download() {
+  # download <url> <dest>
+  curl --proto '=https' --tlsv1.2 -fsSL "$1" -o "$2"
 }
 
-download_to_stdout() {
-  if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$1"
-    return
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{ print $1 }'
+  else
+    shasum -a 256 "$1" | awk '{ print $1 }'
   fi
-
-  if command -v wget >/dev/null 2>&1; then
-    wget -qO- "$1"
-    return
-  fi
-
-  die "curl or wget is required to download setup files"
 }
 
-run_script() {
-  local script_path="$1"
-
-  [ -x "$script_path" ] || chmod +x "$script_path"
-  log ""
-  log "==> Running $(basename "$script_path")"
-  "$script_path"
-}
-
-local_setup_script_for_os() {
-  local base_dir="$1"
-  local os
-  os="$(detect_os)"
-  case "$os" in
-  linux) printf '%s/scripts/setup-local-linux.sh' "$base_dir" ;;
-  darwin) printf '%s/scripts/setup-local-macos.sh' "$base_dir" ;;
-  *) die "Unsupported OS: $(uname -s) (only Linux and macOS are supported)" ;;
-  esac
-}
-
-run_zsh_setup_if_supported() {
-  local base_dir="$1"
-  local os
-  os="$(detect_os)"
-  if [ "$os" = "darwin" ]; then
-    log ""
-    log "ℹ️  Skipping setup-zsh-linux.sh on macOS (use the system zsh; oh-my-zsh can be installed manually if desired)."
-    return 0
-  fi
-  run_script "$base_dir/scripts/setup-zsh-linux.sh"
-}
-
-run_local() {
-  local target="$1"
-  local base_dir="$2"
-
-  case "$target" in
-  zsh)
-    run_zsh_setup_if_supported "$base_dir"
-    ;;
-  local)
-    run_script "$(local_setup_script_for_os "$base_dir")"
-    ;;
-  all)
-    run_zsh_setup_if_supported "$base_dir"
-    run_script "$(local_setup_script_for_os "$base_dir")"
-    ;;
-  update)
-    run_script "$base_dir/scripts/update-tools.sh"
-    ;;
-  doctor)
-    run_script "$base_dir/scripts/doctor.sh"
-    ;;
+# Fetch and extract agentyard for <ref>; prints the extracted root.
+fetch_release() {
+  local ref="$1" tmp="$2" base
+  case "$ref" in
+  latest) base="https://github.com/$REPO/releases/latest/download" ;;
+  v[0-9]*) base="https://github.com/$REPO/releases/download/$ref" ;;
   *)
-    die "Unknown command: $target"
+    log "⚠️  '$ref' はリリースのタグではありません。開発用としてソースを取得します（チェックサム検証なし）。" >&2
+    download "https://codeload.github.com/$REPO/tar.gz/$ref" "$tmp/src.tar.gz" ||
+      die "ダウンロードに失敗しました: $ref"
+    tar -xzf "$tmp/src.tar.gz" -C "$tmp"
+    find "$tmp" -mindepth 1 -maxdepth 1 -type d | head -n1
+    return
     ;;
+  esac
+  download "$base/$ASSET" "$tmp/$ASSET" || die "リリースの配布物を取得できませんでした: $base/$ASSET"
+  download "$base/$ASSET.sha256" "$tmp/$ASSET.sha256" || die "チェックサムを取得できませんでした: $base/$ASSET.sha256"
+  local expected actual
+  expected="$(awk '{ print $1 }' "$tmp/$ASSET.sha256")"
+  actual="$(sha256_of "$tmp/$ASSET")"
+  [ -n "$expected" ] && [ "$expected" = "$actual" ] ||
+    die "チェックサムが一致しません（expected=$expected actual=$actual）"
+  log "✅ チェックサムを確認しました ($ASSET)" >&2
+  mkdir -p "$tmp/agentyard"
+  tar -xzf "$tmp/$ASSET" -C "$tmp/agentyard"
+  printf '%s' "$tmp/agentyard"
+}
+
+dispatch() {
+  local root="$1" cmd="$2"
+  shift 2
+  case "$cmd" in
+  install) bash "$root/scripts/setup.sh" ;;
+  update) bash "$root/scripts/update.sh" "$@" ;;
+  doctor) bash "$root/scripts/doctor.sh" "$@" ;;
+  uninstall) bash "$root/scripts/uninstall.sh" "$@" ;;
+  *) die "不明なコマンド: $cmd" ;;
   esac
 }
 
 main() {
-  local target="all"
-  local ref="$DEFAULT_REF"
-
+  local cmd="install" ref="${AGENTYARD_REF:-${AGENTIC_BOOTSTRAP_REF:-${BOOTSTRAP_REF:-latest}}}"
+  local passthrough=()
   while [ "$#" -gt 0 ]; do
     case "$1" in
-    zsh | local | all | update | doctor)
-      target="$1"
+    install | update | doctor | uninstall) cmd="$1" ;;
+    local | all) cmd="install" ;;
+    zsh)
+      cmd="install"
+      export AGENTYARD_WITH="${AGENTYARD_WITH:+$AGENTYARD_WITH,}zsh"
+      log "ℹ️  'zsh' コマンドは廃止予定です。AGENTYARD_WITH=zsh を使ってください。"
       ;;
     --ref)
-      [ "$#" -ge 2 ] || die "--ref requires a value"
+      [ "$#" -ge 2 ] || die "--ref には値が必要です"
       ref="$2"
       shift
       ;;
-    -y | --auto)
-      export AGENTYARD_ASSUME_YES=1
-      ;;
-    --interactive)
-      export AGENTYARD_ASSUME_YES=0
-      ;;
+    -y | --auto) export AGENTYARD_ASSUME_YES=1 ;;
+    --interactive) export AGENTYARD_ASSUME_YES=0 ;;
     -h | --help)
-      usage
-      exit 0
+      if [ "$cmd" = "update" ]; then
+        passthrough+=("$1")
+      else
+        usage
+        exit 0
+      fi
       ;;
+    --dry-run | --repo) passthrough+=("$1") ;;
     *)
-      die "Unknown argument: $1"
+      if [ "${#passthrough[@]}" -gt 0 ] && [ "${passthrough[${#passthrough[@]} - 1]}" = "--repo" ]; then
+        passthrough+=("$1")
+      else
+        die "不明な引数: $1（--help を参照）"
+      fi
       ;;
     esac
     shift
   done
 
-  if [ -n "${BASH_SOURCE[0]:-}" ]; then
-    local source_path
-    source_path="${BASH_SOURCE[0]}"
-    if [ -f "$source_path" ]; then
-      local script_dir
-      script_dir="$(cd "$(dirname "$source_path")" && pwd)"
-      # Local-checkout fast path: skip the download if the dispatched script
-      # for the current OS exists alongside install.sh.
-      local local_script
-      if local_script="$(local_setup_script_for_os "$script_dir" 2>/dev/null)" &&
-        [ -f "$local_script" ]; then
-        run_local "$target" "$script_dir"
-        return
-      fi
+  # Local checkout: run in place.
+  local self="${BASH_SOURCE[0]:-}"
+  if [ -n "$self" ] && [ -f "$self" ]; then
+    local dir
+    dir="$(cd "$(dirname "$self")" && pwd)"
+    if [ -f "$dir/scripts/setup.sh" ]; then
+      dispatch "$dir" "$cmd" ${passthrough[@]+"${passthrough[@]}"}
+      return
     fi
   fi
 
-  require_command tar
-  require_command mktemp
-
-  local tmp_dir
-  tmp_dir="$(mktemp -d)"
-  # trap は EXIT 発火時点（main 関数を抜けた後）にも評価されるため、
-  # local 変数を遅延展開すると set -u 下で unbound variable になる。
-  # ここでは tmp_dir の値を即時展開して固定文字列としてトラップに焼き込む。
-  # mktemp -d はシングルクォートを含むパスを返さないため安全。
-  # shellcheck disable=SC2064  # 即時展開は意図的（local スコープ問題の回避）
-  trap "rm -rf -- '$tmp_dir'" EXIT
-
-  local archive_url
-  archive_url="https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz/${ref}"
-
-  log "==> Downloading ${REPO_OWNER}/${REPO_NAME} (${ref})"
-  download_to_stdout "$archive_url" | tar -xzf - -C "$tmp_dir"
-
-  local extracted_dir
-  extracted_dir="$(find "$tmp_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)"
-  [ -n "$extracted_dir" ] || die "Failed to unpack downloaded archive"
-
-  run_local "$target" "$extracted_dir"
+  command -v curl >/dev/null 2>&1 || die "curl が必要です"
+  command -v tar >/dev/null 2>&1 || die "tar が必要です"
+  local tmp root
+  tmp="$(mktemp -d)"
+  # shellcheck disable=SC2064  # expand now: tmp is local to main
+  trap "rm -rf -- '$tmp'" EXIT
+  log "==> agentyard ($ref) を取得しています"
+  root="$(fetch_release "$ref" "$tmp")"
+  [ -f "$root/scripts/setup.sh" ] || die "配布物の展開に失敗しました"
+  dispatch "$root" "$cmd" ${passthrough[@]+"${passthrough[@]}"}
 }
 
-# Allow this file to be `source`d (e.g. from bats unit tests) without
-# triggering main(). When executed directly, BASH_SOURCE[0] equals $0.
 if [ "${BASH_SOURCE[0]:-$0}" = "$0" ]; then
   main "$@"
 fi

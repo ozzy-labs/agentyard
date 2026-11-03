@@ -20,8 +20,13 @@ check() {
 echo "Default tools:"
 for t in git git-lfs gh jq rg tree fzf fd bwrap socat mise node pnpm uv; do check "$t"; done
 
-echo "Default agents:"
-for t in claude codex copilot agy; do check "$t"; done
+echo "Agents (${AGENTYARD_AGENTS:-claude,codex,copilot}):"
+for a in $(printf '%s' "${AGENTYARD_AGENTS:-claude,codex,copilot}" | tr ',' ' '); do
+  case "$a" in
+  antigravity) check agy ;;
+  *) check "$a" ;;
+  esac
+done
 
 echo "Opt-ins (${AGENTYARD_WITH:-}):"
 case ",${AGENTYARD_WITH:-}," in *,zsh,*) check zsh ;; esac
@@ -47,10 +52,14 @@ if case ",${AGENTYARD_WITH:-}," in *,agents-md,*) true ;; *) false ;; esac then
     echo "  ❌ Codex symlink"
     FAIL=1
   }
-  grep -qF '](~/.agents/AGENTS.md)' "$HOME/.gemini/AGENTS.md" && echo "  ✅ Antigravity include" || {
-    echo "  ❌ Antigravity include"
-    FAIL=1
-  }
+  case ",${AGENTYARD_AGENTS:-}," in
+  *,antigravity,*)
+    grep -qF '](~/.agents/AGENTS.md)' "$HOME/.gemini/AGENTS.md" && echo "  ✅ Antigravity include" || {
+      echo "  ❌ Antigravity include"
+      FAIL=1
+    }
+    ;;
+  esac
   case ",${COPILOT_CUSTOM_INSTRUCTIONS_DIRS:-}," in
   *",$HOME/.agents,"*) echo "  ✅ Copilot dirs" ;;
   *)

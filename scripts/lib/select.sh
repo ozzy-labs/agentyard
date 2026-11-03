@@ -5,7 +5,7 @@
 # Interactive: numbered list (toggle by number); whiptail checklist when
 #              available and AGENTYARD_UI != plain.
 # Non-interactive:
-#   AGENTYARD_AGENTS  comma list of agents (default: claude,codex,copilot,antigravity)
+#   AGENTYARD_AGENTS  comma list of agents (default: claude,codex,copilot)
 #   AGENTYARD_WITH    comma list of opt-in tools / settings
 #   Legacy INSTALL_* variables are mapped for one migration period.
 # Requires lib/core.sh. Bash 3.2 compatible (no associative arrays).
@@ -13,14 +13,14 @@
 # Registry rows: id|group|default|label
 # group: agent | tool | setting. default applies to the interactive screen;
 # non-interactive defaults are AGENTYARD_DEFAULT_AGENTS only.
-AGENTYARD_DEFAULT_AGENTS="claude,codex,copilot,antigravity"
+AGENTYARD_DEFAULT_AGENTS="claude,codex,copilot"
 
 registry_rows() {
   cat <<'EOF'
 claude|agent|1|Claude Code (Anthropic)
 codex|agent|1|Codex CLI (OpenAI)
 copilot|agent|1|GitHub Copilot CLI (GitHub, 有料契約が必要)
-antigravity|agent|1|Antigravity CLI (Google, 18 歳以上)
+antigravity|agent|0|Antigravity CLI (Google, 18 歳以上)
 gemini|agent|0|Gemini CLI (Google, Gemini Code Assist 契約者向け)
 docker|tool|0|Docker (Linux: Docker Engine / macOS: Desktop・OrbStack・Colima から選択)
 zsh|tool|0|zsh + oh-my-zsh

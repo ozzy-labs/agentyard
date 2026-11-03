@@ -48,7 +48,7 @@ v0.5.0 は、ホストで直接 AI エージェントを動かす構成を基本
   ./install.sh install
   ```
 
-- Gemini CLI は企業の Gemini Code Assist 契約者向けの製品になり、opt-in になりました。個人利用（無料、Google AI Pro / Ultra）は Antigravity CLI に移行しています（[Google の移行ガイド](https://antigravity.google/docs/cli/gcli-migration)）。v0.5.0 では Antigravity CLI が既定で入ります。npm で入れた Gemini CLI を使い続ける場合は、`npm uninstall -g @google/gemini-cli` のあと `AGENTYARD_AGENTS=...,gemini` で入れ直すと、Node の更新で消えなくなります。
+- Gemini CLI は企業の Gemini Code Assist 契約者向けの製品になり、opt-in になりました。個人利用（無料、Google AI Pro / Ultra）は Antigravity CLI に移行しています（[Google の移行ガイド](https://antigravity.google/docs/cli/gcli-migration)）。Antigravity CLI は `AGENTYARD_AGENTS=...,antigravity` で入れられます（opt-in）。npm で入れた Gemini CLI を使い続ける場合は、`npm uninstall -g @google/gemini-cli` のあと `AGENTYARD_AGENTS=...,gemini` で入れ直すと、Node の更新で消えなくなります。
 
 ## 5. 環境変数
 

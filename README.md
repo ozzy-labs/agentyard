@@ -74,7 +74,7 @@ Install order of preference: the tool's official method → the OS package manag
 | Claude Code | ✓ | official installer |
 | Codex CLI | ✓ | official installer |
 | GitHub Copilot CLI | ✓ | official installer (Copilot subscription required) |
-| Antigravity CLI | ✓ | official installer (18+, supported countries) |
+| Antigravity CLI | opt-in | official installer (18+, supported countries) |
 | Gemini CLI | opt-in | npm package via mise (for Gemini Code Assist customers) |
 
 agentyard only installs agents; it never drives them. Each agent asks you to accept its terms at the first login, except Antigravity CLI, whose terms apply from installation (agentyard shows a notice when it is selected).
@@ -113,7 +113,7 @@ Project-specific tools (linters, hooks, language versions, Go / Rust) belong in 
 | Variable | Meaning |
 |---|---|
 | `AGENTYARD_ASSUME_YES=1` (or `-y`, `CI=true`) | non-interactive mode |
-| `AGENTYARD_AGENTS` | agents to install (default `claude,codex,copilot,antigravity`) |
+| `AGENTYARD_AGENTS` | agents to install (default `claude,codex,copilot`) |
 | `AGENTYARD_WITH` | opt-in items (comma separated, see above) |
 | `AGENTYARD_DOCKER_GROUP=1` | add the user to the `docker` group in non-interactive mode |
 | `AGENTYARD_MISE_TRUSTED_PATHS` | directories for `mise-trust` (comma separated) |

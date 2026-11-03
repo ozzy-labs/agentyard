@@ -34,7 +34,7 @@ Options:
 
 Environment (non-interactive selection):
   AGENTYARD_AGENTS   claude,codex,copilot,antigravity,gemini
-                     (default: claude,codex,copilot,antigravity)
+                     (default: claude,codex,copilot)
   AGENTYARD_WITH     docker,zsh,tmux,zellij,aws,azure,gcloud,ast-grep,yq,
                      markitdown,bun,agents-md,mise-trust,wsl-browser,apparmor
                      ("power" = ast-grep,yq,markitdown)

@@ -74,7 +74,7 @@ bash install.sh
 | Claude Code | ✓ | 公式インストーラ |
 | Codex CLI | ✓ | 公式インストーラ |
 | GitHub Copilot CLI | ✓ | 公式インストーラ（Copilot の契約が必要） |
-| Antigravity CLI | ✓ | 公式インストーラ（18 歳以上、対応国） |
+| Antigravity CLI | opt-in | 公式インストーラ（18 歳以上、対応国） |
 | Gemini CLI | opt-in | npm パッケージを mise で管理（Gemini Code Assist 契約者向け） |
 
 agentyard はエージェントをインストールするだけで、操作はしません。各エージェントの利用規約には最初のログイン時に同意します。ただし Antigravity CLI はインストールした時点で規約が適用されるため、選んだときに注意を表示します。
@@ -113,7 +113,7 @@ agentyard はエージェントをインストールするだけで、操作は�
 | 変数 | 意味 |
 |---|---|
 | `AGENTYARD_ASSUME_YES=1`（または `-y`、`CI=true`） | 非対話モード |
-| `AGENTYARD_AGENTS` | 入れるエージェント（既定 `claude,codex,copilot,antigravity`） |
+| `AGENTYARD_AGENTS` | 入れるエージェント（既定 `claude,codex,copilot`） |
 | `AGENTYARD_WITH` | opt-in の項目（カンマ区切り、上表参照） |
 | `AGENTYARD_DOCKER_GROUP=1` | 非対話モードで docker グループに追加する |
 | `AGENTYARD_MISE_TRUSTED_PATHS` | `mise-trust` で信頼するディレクトリ（カンマ区切り） |

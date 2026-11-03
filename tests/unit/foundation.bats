@@ -113,9 +113,9 @@ setup() {
 
 # --- select ----------------------------------------------------------------
 
-@test "select: non-interactive defaults to four agents" {
+@test "select: non-interactive defaults to three agents" {
   select_resolve_noninteractive
-  [ "$SELECTED" = "claude codex copilot antigravity" ]
+  [ "$SELECTED" = "claude codex copilot" ]
 }
 
 @test "select: AGENTYARD_AGENTS and AGENTYARD_WITH" {
@@ -132,7 +132,7 @@ setup() {
 @test "select: unknown ids are ignored with a warning" {
   run bash -c "source '$SCRIPT_ROOT/scripts/lib/core.sh'; source '$SCRIPT_ROOT/scripts/lib/select.sh'; AGENTYARD_WITH=bogus select_resolve_noninteractive; echo \"[\$SELECTED]\""
   [[ "$output" == *"不明な項目"* ]]
-  [[ "$output" == *"[claude codex copilot antigravity]"* ]]
+  [[ "$output" == *"[claude codex copilot]"* ]]
 }
 
 @test "select: legacy INSTALL_* variables are mapped" {

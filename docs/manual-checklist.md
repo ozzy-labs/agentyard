@@ -18,7 +18,7 @@ CI（Docker コンテナ、GitHub ホストランナー）では確認できな�
 - [ ] Claude Code: `claude` でログインできる
 - [ ] Codex CLI: `codex` でログインできる
 - [ ] Copilot CLI: `copilot` で `/login` できる（Copilot 契約のあるアカウント）
-- [ ] Antigravity CLI: WSL でキーリングを用いたログインが成立する（成立しない場合は既定から opt-in に下げる。ADR-0007 §4）
+- [ ] Antigravity CLI（opt-in）: WSL でキーリングを用いたログインが成立する（成立すれば既定に戻すかを判断する。ADR-0007 §4）
 - [ ] Gemini CLI（opt-in）: 起動でき、自動更新と mise による更新が衝突しない
 
 ## AGENTS.md の連携

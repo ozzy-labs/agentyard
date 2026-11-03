@@ -8,6 +8,8 @@
 set -eo pipefail
 
 ASSERT_SCRIPT="/workspace/tests/integration/assert-tools.sh"
+# Antigravity is opt-in but still exercised here.
+export AGENTYARD_AGENTS="${AGENTYARD_AGENTS:-claude,codex,copilot,antigravity}"
 export AGENTYARD_WITH="${AGENTYARD_WITH:-agents-md,zsh,tmux,zellij,aws,ast-grep,yq,markitdown,bun}"
 export AGENTYARD_OFFLINE=1
 

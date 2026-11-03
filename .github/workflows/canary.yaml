@@ -124,6 +124,7 @@ jobs:
     env:
       AGENTYARD_ASSUME_YES: "1"
       AGENTYARD_OFFLINE: "1"
+      AGENTYARD_AGENTS: claude,codex,copilot,antigravity
       AGENTYARD_WITH: agents-md
       CI: "true"
     steps:
@@ -184,6 +185,7 @@ jobs:
     env:
       AGENTYARD_ASSUME_YES: "1"
       AGENTYARD_OFFLINE: "1"
+      AGENTYARD_AGENTS: claude,codex,copilot,antigravity
       AGENTYARD_WITH: agents-md
       CI: "true"
     steps:

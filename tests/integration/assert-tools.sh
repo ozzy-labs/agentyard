@@ -20,6 +20,14 @@ check() {
 echo "Default tools:"
 for t in git git-lfs gh jq rg tree fzf fd bwrap socat mise node pnpm uv; do check "$t"; done
 
+echo "gh from the official repository:"
+if gh attestation --help >/dev/null 2>&1; then
+  printf '  ✅ gh %s (gh attestation available)\n' "$(gh --version | awk 'NR==1 { print $3 }')"
+else
+  printf '  ❌ gh %s lacks gh attestation (still Ubuntu'"'"'s package?)\n' "$(gh --version | awk 'NR==1 { print $3 }')"
+  FAIL=1
+fi
+
 echo "Agents (${AGENTYARD_AGENTS:-claude,codex,copilot}):"
 for a in $(printf '%s' "${AGENTYARD_AGENTS:-claude,codex,copilot}" | tr ',' ' '); do
   case "$a" in

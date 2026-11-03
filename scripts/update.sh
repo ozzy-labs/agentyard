@@ -57,7 +57,11 @@ fi
 
 log_section "mise"
 if [ -x "$MISE_BIN" ]; then
-  run "mise 本体" "$MISE_BIN" self-update -y
+  if mise_is_official_install; then
+    run "mise 本体" "$MISE_BIN" self-update -y
+  else
+    log_skip "mise 本体（$MISE_BIN）は、入れた方法（apt / Homebrew など）で更新してください"
+  fi
   for tool in $(state_list mise); do
     run "$tool" mise_at_home upgrade "$tool"
   done

@@ -36,6 +36,8 @@ curl --proto '=https' --tlsv1.2 -fsSL \
 
 ### Verify before running (optional)
 
+Requires GitHub CLI 2.49 or later (Ubuntu's own `gh` package is older; agentyard replaces it with the official build).
+
 Releases ship `agentyard.tar.gz` (verified by `install.sh` with SHA-256) and `install.sh`, both with [GitHub Artifact Attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations):
 
 ```bash

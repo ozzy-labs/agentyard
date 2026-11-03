@@ -67,9 +67,15 @@ install_zellij() {
 #   https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 install_aws() {
   log_section "AWS CLI"
-  if has_cmd aws; then
+  if [ -x "$HOME/.local/bin/aws" ] || { has_cmd aws && ! { [ "$(os_kind)" = "linux" ] && apt_pkg_installed awscli; }; }; then
     log_skip "aws は導入済みです"
     return 0
+  fi
+  if [ "$(os_kind)" = "linux" ] && apt_pkg_installed awscli; then
+    # Ubuntu's awscli is an older, distro-patched build. The official one is
+    # installed to ~/.local/bin, which comes first on PATH.
+    log_warn "Ubuntu 標準のリポジトリの awscli $(apt_pkg_version awscli) が入っています。公式版を ~/.local/bin に入れます（こちらが優先されます）。"
+    log_info "不要になった apt 版は 'sudo apt remove awscli' で削除できます。"
   fi
   case "$(os_kind)" in
   linux)
@@ -125,7 +131,13 @@ install_ast_grep() {
 install_yq() {
   log_section "yq"
   case "$(os_kind)" in
-  linux) mise_global yq ;;
+  linux)
+    mise_global yq
+    if apt_pkg_installed yq; then
+      # Ubuntu's `yq` package is a different tool (kislyuk/yq, a jq wrapper).
+      log_warn "Ubuntu の yq パッケージ（別物の Python 製 yq）が入っています。mise の yq（mikefarah/yq）が優先されます。不要なら 'sudo apt remove yq' で削除できます。"
+    fi
+    ;;
   macos) brew_install formula yq ;;
   esac
 }

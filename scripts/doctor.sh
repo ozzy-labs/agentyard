@@ -89,6 +89,36 @@ check_agents() {
   fi
 }
 
+# Tools installed from a source other than the one ADR-0007 prescribes
+# (old distro builds, conflicting packages, duplicate installs).
+check_tool_sources() {
+  log_section "ツールの入手元"
+  local any=0
+  if has_cmd gh; then
+    local ghv
+    ghv="$(gh --version 2>/dev/null | awk 'NR==1 { print $3 }')"
+    if [ -n "$ghv" ] && ! _version_ge "$ghv" 2.49.0; then
+      warn "gh $ghv は古いため、gh attestation などが使えません" "./install.sh install（公式 apt リポジトリの版に更新します）"
+      any=1
+    fi
+  fi
+  if [ "$(os_kind)" = "linux" ]; then
+    if apt_pkg_installed awscli && [ -x "$HOME/.local/bin/aws" ]; then
+      info "apt の awscli と公式版の AWS CLI が両方あります（公式版が優先されます）。不要なら sudo apt remove awscli"
+      any=1
+    fi
+    if apt_pkg_installed yq && state_has mise yq; then
+      info "apt の yq（別物の Python 製 yq）があります。mise の yq が優先されます。不要なら sudo apt remove yq"
+      any=1
+    fi
+  fi
+  if [ -x "$HOME/.local/bin/mise" ] && [ "$(command -v mise 2>/dev/null)" != "$HOME/.local/bin/mise" ] && has_cmd mise; then
+    warn "mise が複数あります（$(command -v mise) と ~/.local/bin/mise）" "使わない方を削除してください"
+    any=1
+  fi
+  [ "$any" = "1" ] || ok "問題は見つかりませんでした"
+}
+
 # _version_ge <a> <b>: a >= b (dotted numeric)
 _version_ge() {
   [ "$(printf '%s\n%s\n' "$1" "$2" | sort -t. -k1,1n -k2,2n -k3,3n | head -n1)" = "$2" ]
@@ -257,6 +287,7 @@ main() {
     check_tools
     check_shell_env
     check_agents
+    check_tool_sources
     check_sandbox
     check_agents_md
     check_wsl

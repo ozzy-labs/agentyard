@@ -36,6 +36,8 @@ curl --proto '=https' --tlsv1.2 -fsSL \
 
 ### 実行前に確かめる（任意）
 
+GitHub CLI 2.49 以降が必要です（Ubuntu 標準の `gh` パッケージはそれより古いため、agentyard は公式版に置き換えます）。
+
 リリースには `agentyard.tar.gz`（`install.sh` が SHA-256 で検証します）と `install.sh` が添付され、どちらにも [GitHub Artifact Attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations) が付いています。
 
 ```bash

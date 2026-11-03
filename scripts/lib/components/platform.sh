@@ -76,6 +76,18 @@ EOF
   log_ok "BROWSER に $wrapper を設定します（env.sh）"
 }
 
+# Common workspace directories under $HOME that actually contain git repos.
+_mise_trust_candidates() {
+  local d out=""
+  for d in repos src code projects work dev; do
+    [ -d "$HOME/$d" ] || continue
+    if find "$HOME/$d" -mindepth 2 -maxdepth 2 -name .git 2>/dev/null | grep -q .; then
+      out="${out:+$out,}~/$d"
+    fi
+  done
+  printf '%s' "$out"
+}
+
 # mise: trust config files under the given directories (global config only).
 # https://mise.jdx.dev/configuration/settings.html#trusted_config_paths
 install_mise_trust() {
@@ -87,9 +99,18 @@ install_mise_trust() {
       return 0
     fi
     log_warn "指定したディレクトリ配下のリポジトリの mise 設定は、確認なしで信頼されます。"
-    printf '  信頼するディレクトリ（カンマ区切り、空欄でスキップ。例: %s/repos）: ' "$HOME"
-    read -r paths || true
-    [ -n "$paths" ] || return 0
+    local suggested
+    suggested="$(_mise_trust_candidates)"
+    if [ -n "$suggested" ]; then
+      printf '  信頼するディレクトリ（カンマ区切り。Enter で [%s]、- でスキップ）: ' "$suggested"
+      read -r paths || true
+      [ -z "$paths" ] && paths="$suggested"
+      [ "$paths" = "-" ] && return 0
+    else
+      printf '  信頼するディレクトリ（カンマ区切り、空欄でスキップ）: '
+      read -r paths || true
+      [ -n "$paths" ] || return 0
+    fi
   fi
   local p ok=1 added=""
   for p in $(printf '%s' "$paths" | tr ',' ' '); do

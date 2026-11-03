@@ -49,7 +49,7 @@ mise_global() {
       return 0
     fi
   fi
-  if mise_at_home use --global "$tool@$spec" >/dev/null; then
+  if quiet_run mise_at_home use --global "$tool@$spec"; then
     state_add mise "$tool" "$spec"
     log_ok "$tool@$spec (mise)"
   else

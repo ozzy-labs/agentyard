@@ -106,8 +106,47 @@ ensure_sudo() {
     if is_non_interactive; then
       die "非対話モードでは、パスワードなしで sudo を実行できる必要があります。"
     fi
-    log_info "管理者権限が必要です（sudo のパスワードを入力してください）"
+    log_info "管理者権限が必要です（sudo のパスワードを入力してください。以降は聞かれません）"
     sudo -v || die "sudo の認証に失敗しました。"
+  fi
+  _sudo_keepalive_start
+}
+
+# Keep the sudo timestamp fresh for the whole run so long steps (downloads,
+# builds) never trigger a second password prompt. Stops when the parent exits.
+_SUDO_KEEPALIVE_PID=""
+_sudo_keepalive_start() {
+  [ -n "$_SUDO_KEEPALIVE_PID" ] && return 0
+  local parent=$$
+  (
+    while kill -0 "$parent" 2>/dev/null; do
+      sudo -n true 2>/dev/null || exit 0
+      sleep 50
+    done
+  ) >/dev/null 2>&1 &
+  _SUDO_KEEPALIVE_PID=$!
+  trap '_sudo_keepalive_stop' EXIT
+}
+
+_sudo_keepalive_stop() {
+  if [ -n "$_SUDO_KEEPALIVE_PID" ]; then
+    kill "$_SUDO_KEEPALIVE_PID" 2>/dev/null || true
+    _SUDO_KEEPALIVE_PID=""
+  fi
+}
+
+# quiet_run <cmd...>: hide output unless the command fails.
+quiet_run() {
+  local out rc
+  out="$(mktemp)"
+  if "$@" >"$out" 2>&1; then
+    rm -f "$out"
+    return 0
+  else
+    rc=$?
+    sed 's/^/    | /' "$out" >&2
+    rm -f "$out"
+    return "$rc"
   fi
 }
 

@@ -6,6 +6,11 @@
 
 # --- zsh + oh-my-zsh ---------------------------------------------------------
 # https://github.com/ohmyzsh/ohmyzsh/blob/master/tools/install.sh
+_install_ohmyzsh() {
+  curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh |
+    RUNZSH=no CHSH=no KEEP_ZSHRC="$1" sh -s -- --unattended
+}
+
 install_zsh() {
   log_section "zsh + oh-my-zsh"
   if [ "$(os_kind)" = "linux" ]; then
@@ -17,8 +22,7 @@ install_zsh() {
     local keep=no
     # Never replace an existing ~/.zshrc (ADR-0007 principle 7).
     [ -f "$HOME/.zshrc" ] && keep=yes
-    if curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh |
-      RUNZSH=no CHSH=no KEEP_ZSHRC="$keep" sh -s -- --unattended >/dev/null; then
+    if quiet_run _install_ohmyzsh "$keep"; then
       state_add component oh-my-zsh
       log_ok "oh-my-zsh を導入しました"
       if [ "$keep" = "yes" ]; then
@@ -34,7 +38,9 @@ install_zsh() {
   zsh_path="$(command -v zsh)"
   if [ "$(os_kind)" = "linux" ] && [ "${SHELL:-}" != "$zsh_path" ] && ! is_non_interactive; then
     if ask_yes_no "ログインシェルを zsh に変更しますか？" n; then
-      chsh -s "$zsh_path" && log_ok "ログインシェルを zsh に変更しました（次回ログインから有効）"
+      # sudo reuses the cached credentials; plain chsh would ask for the
+      # user's password again.
+      sudo chsh -s "$zsh_path" "$(id -un)" && log_ok "ログインシェルを zsh に変更しました（次回ログインから有効）"
     fi
   fi
 }
@@ -69,7 +75,7 @@ install_aws() {
   linux)
     # The installer verifies its signature with gpg (absent on minimal images).
     apt_install gnupg || return 1
-    if run_remote_installer https://awscli.amazonaws.com/v2/install.sh bash --quiet; then
+    if quiet_run run_remote_installer https://awscli.amazonaws.com/v2/install.sh bash --quiet; then
       state_add component aws
       log_ok "AWS CLI を導入しました (~/.local/bin/aws)"
     else

@@ -252,3 +252,23 @@ _fake_os_release() {
   [ -n "$(tools_version zellij)" ]
   ! tools_version nonexistent >/dev/null || [ -z "$(tools_version nonexistent)" ]
 }
+
+# --- quiet_run / mise-trust candidates --------------------------------------
+
+@test "quiet_run: hides output on success, shows it on failure" {
+  run quiet_run sh -c 'echo noisy'
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+  run quiet_run sh -c 'echo boom >&2; exit 3'
+  [ "$status" -eq 3 ]
+  [[ "$output" == *"| boom"* ]]
+}
+
+@test "mise-trust: suggests only workspace dirs that contain git repos" {
+  # shellcheck disable=SC1091
+  source "$SCRIPT_ROOT/scripts/lib/components/platform.sh"
+  mkdir -p "$HOME/repos/a/.git" "$HOME/src" "$HOME/code/b"
+  [ "$(_mise_trust_candidates)" = "~/repos" ]
+  mkdir -p "$HOME/src/c/.git"
+  [ "$(_mise_trust_candidates)" = "~/repos,~/src" ]
+}

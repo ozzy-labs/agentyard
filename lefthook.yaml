@@ -35,3 +35,31 @@ pre-commit:
       skip: true
     agentyard-trivy:
       run: mise exec -- trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --no-progress .
+
+commit-msg:
+  commands:
+    # Substitute base `commitlint`: newer mise (aube-based npm: backend)
+    # installs packages under <dir>/node_modules instead of
+    # <dir>/lib/node_modules, and commitlint resolves `extends` relative to
+    # the config file (NODE_PATH is ignored for ES modules). Generate a
+    # temporary config whose `extends` points at the preset's entry file by
+    # absolute path. Supports both layouts until commons ships a fix.
+    commitlint:
+      run: "true"
+      skip: true
+    agentyard-commitlint:
+      run: |
+        d="$(mise where npm:@commitlint/config-conventional 2>/dev/null)"
+        preset=""
+        for base in "$d/node_modules" "$d/lib/node_modules"; do
+          f="$base/@commitlint/config-conventional/lib/index.js"
+          if [ -f "$f" ]; then preset="$f"; break; fi
+        done
+        if [ -z "$preset" ]; then
+          echo "commitlint: @commitlint/config-conventional not found (run: mise install)" >&2
+          exit 1
+        fi
+        cfg_dir="$(mktemp -d)"
+        trap 'rm -rf "$cfg_dir"' EXIT
+        sed "s|\"@commitlint/config-conventional\"|\"$preset\"|" .commitlintrc.yaml >"$cfg_dir/commitlint.config.yaml"
+        mise exec -- commitlint --config "$cfg_dir/commitlint.config.yaml" --edit {1}

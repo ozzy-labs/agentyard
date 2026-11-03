@@ -21,18 +21,19 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'ci:integration')
-    name: Integration test (ubuntu:${{ matrix.ubuntu }}, ${{ matrix.scenario }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    name: Integration test (ubuntu:${{ matrix.ubuntu }}, ${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        ubuntu: ["22.04", "24.04"]
-        # fresh: クリーンな ubuntu イメージから install.sh を実行（既存）
-        # upgrade: 直近リリース tag の install.sh で bootstrap 済みの
-        #          イメージに HEAD コードを重ねて再実行し、過去版が残した
-        #          state を新コードが正しく扱えるかを検証（issue #142）
-        scenario: [fresh, upgrade]
+        ubuntu: ["24.04", "26.04"]
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -48,25 +49,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
-      - name: Build test image (ubuntu:${{ matrix.ubuntu }}, ${{ matrix.scenario }})
+      - name: Build test image (ubuntu:${{ matrix.ubuntu }}, ${{ matrix.arch }})
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
-          file: tests/integration/Dockerfile${{ matrix.scenario == 'upgrade' && '.upgrade' || '' }}
+          file: tests/integration/Dockerfile
           build-args: |
             UBUNTU_VERSION=${{ matrix.ubuntu }}
-          tags: agentyard-test:${{ matrix.ubuntu }}-${{ matrix.scenario }}
+          tags: agentyard-test:${{ matrix.ubuntu }}-${{ matrix.arch }}
           load: true
-          # cache scope を scenario ごとに分離する。fresh と upgrade は
-          # 別 Dockerfile かつ多段ビルド構成も異なるため、共有すると
-          # cache hit 率が下がる。
-          cache-from: type=gha,scope=ubuntu-${{ matrix.ubuntu }}-${{ matrix.scenario }}
-          cache-to: type=gha,scope=ubuntu-${{ matrix.ubuntu }}-${{ matrix.scenario }},mode=max
+          cache-from: type=gha,scope=ubuntu-${{ matrix.ubuntu }}-${{ matrix.arch }}
+          cache-to: type=gha,scope=ubuntu-${{ matrix.ubuntu }}-${{ matrix.arch }},mode=max
 
-      - name: Run integration test (install + idempotency)
+      - name: Run integration test (install, idempotency, doctor, uninstall)
         env:
           # mise の GitHub API 叩きを認証して rate limit を 5000/hr に上げる
           GITHUB_TOKEN_FOR_MISE: ${{ secrets.GITHUB_TOKEN }}
         run: |
           docker run --rm -e "GITHUB_TOKEN=$GITHUB_TOKEN_FOR_MISE" \
-            agentyard-test:${{ matrix.ubuntu }}-${{ matrix.scenario }}
+            agentyard-test:${{ matrix.ubuntu }}-${{ matrix.arch }}

@@ -89,3 +89,34 @@ _load() {
   [ "$MISE_BIN" = "$HOME/.local/bin/mise" ]
   mise_is_official_install
 }
+
+@test "mise-trust: re-runs skip the prompt when already configured" {
+  _load
+  state_add setting mise-trust "$HOME/repos"
+  mise_at_home() {
+    case "$*" in
+    "settings get trusted_config_paths") printf '["%s/repos"]\n' "$HOME" ;;
+    *) echo "mise $*" >>"$MOCK_LOG" ;;
+    esac
+  }
+  unset AGENTYARD_MISE_TRUSTED_PATHS
+  AGENTYARD_ASSUME_YES=0 CI=false run install_mise_trust </dev/null
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"設定済みです"* ]]
+  [[ "$output" != *"信頼するディレクトリ"* ]]
+  [ ! -s "$MOCK_LOG" ]
+}
+
+@test "mise-trust: an explicit AGENTYARD_MISE_TRUSTED_PATHS still adds directories" {
+  _load
+  state_add setting mise-trust "$HOME/repos"
+  mise_at_home() {
+    case "$*" in
+    "settings get trusted_config_paths") printf '["%s/repos"]\n' "$HOME" ;;
+    *) echo "mise $*" >>"$MOCK_LOG" ;;
+    esac
+  }
+  AGENTYARD_MISE_TRUSTED_PATHS="$HOME/work" run install_mise_trust
+  [ "$status" -eq 0 ]
+  grep -q "settings add trusted_config_paths $HOME/work" "$MOCK_LOG"
+}

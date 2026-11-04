@@ -101,6 +101,17 @@ _mise_trust_candidates() {
 install_mise_trust() {
   log_section "mise の信頼設定"
   local paths="${AGENTYARD_MISE_TRUSTED_PATHS:-}"
+  # Already configured by agentyard: do not ask again on re-runs. An explicit
+  # AGENTYARD_MISE_TRUSTED_PATHS still adds more directories.
+  if [ -z "$paths" ] && state_has setting mise-trust; then
+    local current
+    current="$(mise_at_home settings get trusted_config_paths 2>/dev/null | tr -d '[]"' | sed 's/, */,/g')"
+    if [ -n "$current" ]; then
+      log_skip "trusted_config_paths は設定済みです（$current）"
+      log_info "追加: AGENTYARD_MISE_TRUSTED_PATHS=<dir> ./install.sh install / 削除: ~/.config/mise/config.toml の trusted_config_paths を編集（すべて外す場合は mise settings unset trusted_config_paths）"
+      return 0
+    fi
+  fi
   if [ -z "$paths" ]; then
     if is_non_interactive; then
       log_warn "AGENTYARD_MISE_TRUSTED_PATHS が未指定のためスキップします"

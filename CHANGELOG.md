@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/ozzy-labs/agentyard/compare/v0.5.1...v0.5.2) (2026-11-04)
+
+
+### Bug Fixes
+
+* **mise-trust:** do not ask again on re-runs once configured ([#203](https://github.com/ozzy-labs/agentyard/issues/203)) ([f3b1a26](https://github.com/ozzy-labs/agentyard/commit/f3b1a263277676c9461e904548abc3400b3ad34d))
+
 ## [0.5.1](https://github.com/ozzy-labs/agentyard/compare/v0.5.0...v0.5.1) (2026-11-03)
 
 

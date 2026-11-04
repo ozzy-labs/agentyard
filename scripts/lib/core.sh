@@ -5,7 +5,7 @@
 # Source this file; do not execute it. Bash 3.2 compatible (macOS).
 
 # Updated by release-please (see release-please-config.json extra-files).
-AGENTYARD_VERSION="0.5.1" # x-release-please-version
+AGENTYARD_VERSION="0.5.2" # x-release-please-version
 
 AGENTYARD_REPO="ozzy-labs/agentyard"
 AGENTYARD_CONFIG_DIR="${AGENTYARD_CONFIG_DIR:-$HOME/.config/agentyard}"

@@ -73,7 +73,9 @@ Ubuntu 22.04 以前、Debian を含むその他の Linux、WSL1、Intel Mac、�
 | サンドボックス | bubblewrap、socat | 不要（Seatbelt） |
 | ランタイム | mise（公式インストーラ）、node LTS、pnpm、uv | 同じ |
 
-**エージェント CLI（選択式、常に最新）**: Claude Code、Codex、Copilot CLI は既定でチェックあり、Antigravity CLI と Gemini CLI は opt-in。Gemini 以外は Linux / macOS とも公式インストーラ、Gemini CLI は mise の npm バックエンド（`npm:@google/gemini-cli@latest`）で入れる。Antigravity CLI は、WSL でキーリングを用いたログインが成立することを実機で確認できるまで opt-in とする（確認後に既定へ戻すかを判断する）。必要なアカウントや契約は選択画面の項目名に示す。各エージェントの規約への同意は最初のログイン時に行われるため個別の確認は設けず、インストール時点で規約が適用される Antigravity CLI を選んだ場合だけ注意を表示する。agentyard はエージェントを操作しない。
+**エージェント CLI（選択式、常に最新）**: Claude Code、Codex、Copilot CLI は既定でチェックあり、Antigravity CLI と Gemini CLI は opt-in。Gemini 以外は Linux / macOS とも公式インストーラ、Gemini CLI は mise の npm バックエンド（`npm:@google/gemini-cli@latest`）で入れる。Antigravity CLI は、WSL でキーリングを用いたログインが成立することを実機で確認できるまで opt-in とする（確認後に既定へ戻すかを判断する）。必要なアカウントや契約は選択画面の項目名に示す。agentyard はエージェントを操作しない。
+
+**第三者ソフトウェアの告知**: 実行中に告知は出さない（実行時の警告は増やさない）。選択画面の項目名に書くのは「**インストール時点で規約が適用される**もの」（agentyard がその install を代行するため。Antigravity CLI が該当）と「**商用利用に有償ライセンスが必要**なもの」（macOS の Docker Desktop / OrbStack）に限る。テレメトリの既定は、1 コマンドで変更でき本人の設定として管理できるため項目名には書かず、全導入物の棚卸し（[docs/third-party.md](../third-party.md)、ライセンス・規約の同意タイミング・データ収集の既定・商用の条件を根拠 URL 付きで記録）に集約する。
 
 **opt-in**: Docker（Linux は Docker Engine。Docker Desktop を検出したら入れない。macOS は Docker Desktop / OrbStack / Colima）、zsh と oh-my-zsh、tmux、zellij、AWS CLI、Azure CLI、gcloud、ast-grep、yq、markitdown、Bun。
 

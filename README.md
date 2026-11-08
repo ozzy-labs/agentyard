@@ -76,10 +76,10 @@ Install order of preference: the tool's official method → the OS package manag
 | Claude Code | ✓ | official installer |
 | Codex CLI | ✓ | official installer |
 | GitHub Copilot CLI | ✓ | official installer (Copilot subscription required) |
-| Antigravity CLI | opt-in | official installer (18+, supported countries) |
+| Antigravity CLI | opt-in | official installer (18+, supported countries; its terms apply from installation) |
 | Gemini CLI | opt-in | npm package via mise (for Gemini Code Assist customers) |
 
-agentyard only installs agents; it never drives them. Each agent asks you to accept its terms at the first login, except Antigravity CLI, whose terms apply from installation (agentyard shows a notice when it is selected).
+agentyard only installs agents; it never drives them. Each agent asks you to accept its terms at the first login, except Antigravity CLI, whose terms apply from installation — which is why its selection label says so. [docs/third-party.md](docs/third-party.md) lists the licence, when the terms apply, the data-collection default, and the commercial conditions for everything agentyard installs, with sources.
 
 ### Opt-in (`AGENTYARD_WITH`)
 

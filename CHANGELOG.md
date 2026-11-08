@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.0](https://github.com/ozzy-labs/agentyard/compare/v0.6.0...v0.7.0) (2026-11-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* 選択画面の既定チェックをやめ、必ず入るものを画面に明示する ([#213](https://github.com/ozzy-labs/agentyard/issues/213))
+
+### Features
+
+* 選択画面の既定チェックをやめ、必ず入るものを画面に明示する ([#213](https://github.com/ozzy-labs/agentyard/issues/213)) ([d9767d7](https://github.com/ozzy-labs/agentyard/commit/d9767d7bec6099b2d0a01d8137dd7a52713c8703))
+
+
+### Continuous Integration
+
+* **release:** keep breaking changes inside 0.x with bump-minor-pre-major ([#215](https://github.com/ozzy-labs/agentyard/issues/215)) ([a0e22ae](https://github.com/ozzy-labs/agentyard/commit/a0e22ae4e940c699c45dbf4d0f237bd8bfeb4dac))
+
 ## [0.6.0](https://github.com/ozzy-labs/agentyard/compare/v0.5.3...v0.6.0) (2026-11-08)
 
 

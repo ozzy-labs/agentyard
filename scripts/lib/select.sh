@@ -20,7 +20,7 @@ registry_rows() {
 claude|agent|1|Claude Code (Anthropic)
 codex|agent|1|Codex CLI (OpenAI)
 copilot|agent|1|GitHub Copilot CLI (GitHub, 有料契約が必要)
-antigravity|agent|0|Antigravity CLI (Google, 18 歳以上)
+antigravity|agent|0|Antigravity CLI (Google, 18 歳以上・インストールで規約が適用)
 gemini|agent|0|Gemini CLI (Google, Gemini Code Assist 契約者向け)
 docker|tool|0|Docker (Linux: Docker Engine / macOS: Desktop・OrbStack・Colima から選択)
 zsh|tool|0|zsh + oh-my-zsh
@@ -271,14 +271,4 @@ select_components() {
   printf '\n選択された項目:\n'
   local id
   for id in $SELECTED; do printf '  - %s\n' "$(registry_label "$id")"; done
-}
-
-# Install-time notices. Most agents ask users to accept their terms at the
-# first login, so only Antigravity CLI (whose terms state that installing it
-# means agreeing) gets a notice here. Account requirements are shown in the
-# selection labels.
-print_agent_notices() {
-  selected antigravity || return 0
-  printf '\n'
-  log_info "Antigravity CLI は、インストールした時点で利用規約に同意したものとみなされます（利用データの収集が既定で有効。設定で無効にできます）: https://antigravity.google/terms"
 }

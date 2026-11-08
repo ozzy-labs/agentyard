@@ -76,10 +76,10 @@ bash install.sh
 | Claude Code | ✓ | 公式インストーラ |
 | Codex CLI | ✓ | 公式インストーラ |
 | GitHub Copilot CLI | ✓ | 公式インストーラ（Copilot の契約が必要） |
-| Antigravity CLI | opt-in | 公式インストーラ（18 歳以上、対応国） |
+| Antigravity CLI | opt-in | 公式インストーラ（18 歳以上、対応国。インストール時点で規約が適用） |
 | Gemini CLI | opt-in | npm パッケージを mise で管理（Gemini Code Assist 契約者向け） |
 
-agentyard はエージェントをインストールするだけで、操作はしません。各エージェントの利用規約には最初のログイン時に同意します。ただし Antigravity CLI はインストールした時点で規約が適用されるため、選んだときに注意を表示します。
+agentyard はエージェントをインストールするだけで、操作はしません。各エージェントの利用規約には最初のログイン時に同意します。ただし Antigravity CLI はインストールした時点で規約が適用されるため、選択画面の項目名にそう書いてあります。agentyard が入れるものすべてのライセンス・規約の適用時点・データ収集の既定・商用の条件は [docs/third-party.md](docs/third-party.md) に根拠付きでまとめてあります。
 
 ### opt-in（`AGENTYARD_WITH`）
 

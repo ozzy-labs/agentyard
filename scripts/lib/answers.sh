@@ -72,7 +72,7 @@ collect_answers() {
     macos)
       if [ -z "$ANSWER_MACOS_DOCKER" ] && ! has_cmd docker; then
         _answers_section
-        case "$(_ask_text 'コンテナ環境を選んでください: 1) Docker Desktop  2) OrbStack  3) Colima [3]: ')" in
+        case "$(_ask_text 'コンテナ環境を選んでください: 1) Docker Desktop (組織の規模により有償)  2) OrbStack (商用は有償)  3) Colima [3]: ')" in
         1) ANSWER_MACOS_DOCKER=docker-desktop ;;
         2) ANSWER_MACOS_DOCKER=orbstack ;;
         *) ANSWER_MACOS_DOCKER=colima ;;

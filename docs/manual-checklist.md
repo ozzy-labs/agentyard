@@ -50,6 +50,7 @@ CI（Docker コンテナ、GitHub ホストランナー）では確認できな�
 - [ ] release PR（`chore(main): release X.Y.Z`）の CI が、承認操作なしで走る（GitHub App トークンの設定が効いているか。未設定なら `Awaiting approval` のまま止まる）
 - [ ] release PR のマージで tag と GitHub Release が作られ、`agentyard.tar.gz` / `install.sh` とその `.sha256` が添付される
 - [ ] `curl ... releases/latest/download/install.sh | bash` が新しい版を取得する
+- [ ] [docs/third-party.md](third-party.md) の内容が各ベンダーの現在の条件と合っている（ライセンス・規約の適用時点・データ収集の既定・商用の条件）
 
 ## uninstall
 

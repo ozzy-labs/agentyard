@@ -130,3 +130,14 @@ setup() {
   [ "$status" -eq 0 ]
   grep -q "settings add trusted_config_paths $HOME/github" "$MOCK_LOG"
 }
+
+# --- third-party notices ---------------------------------------------------
+
+@test "notices: no run-time notice step exists" {
+  ! declare -F print_agent_notices >/dev/null
+  ! grep -q print_agent_notices "$SCRIPT_ROOT/scripts/setup.sh"
+}
+
+@test "notices: Antigravity's label carries the install-time terms" {
+  [[ "$(registry_label antigravity)" == *"インストールで規約が適用"* ]]
+}

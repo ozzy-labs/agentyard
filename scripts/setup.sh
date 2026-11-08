@@ -23,7 +23,6 @@ attach_tty_if_needed
 session_path_setup
 
 select_components
-print_agent_notices
 # Ask everything now, so the install itself runs without stopping.
 collect_answers
 if ! is_non_interactive; then

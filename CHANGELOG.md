@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/ozzy-labs/agentyard/compare/v0.7.1...v0.7.2) (2026-11-08)
+
+
+### Bug Fixes
+
+* 再実行時にログインシェルと Copilot 連携を「済み」と報告する ([#218](https://github.com/ozzy-labs/agentyard/issues/218)) ([639db28](https://github.com/ozzy-labs/agentyard/commit/639db281f93379a98545d0bca45c364b4cf29136))
+
 ## [0.7.1](https://github.com/ozzy-labs/agentyard/compare/v0.7.0...v0.7.1) (2026-11-08)
 
 

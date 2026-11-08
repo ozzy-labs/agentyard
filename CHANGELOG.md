@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/ozzy-labs/agentyard/compare/v0.7.0...v0.7.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **mise-trust:** curl | bash でも実行できる案内にする ([#216](https://github.com/ozzy-labs/agentyard/issues/216)) ([10b18ad](https://github.com/ozzy-labs/agentyard/commit/10b18ad84d9f12318887c68c1c1e1d2327aae759))
+
 ## [0.7.0](https://github.com/ozzy-labs/agentyard/compare/v0.6.0...v0.7.0) (2026-11-08)
 
 

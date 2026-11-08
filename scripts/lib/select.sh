@@ -5,21 +5,26 @@
 # Interactive: numbered list (toggle by number); whiptail checklist when
 #              available and AGENTYARD_UI != plain.
 # Non-interactive:
-#   AGENTYARD_AGENTS  comma list of agents (default: claude,codex,copilot)
+#   AGENTYARD_AGENTS  comma list of agents (no default: nothing is selected)
 #   AGENTYARD_WITH    comma list of opt-in tools / settings
 #   Legacy INSTALL_* variables are mapped for one migration period.
 # Requires lib/core.sh. Bash 3.2 compatible (no associative arrays).
+#
+# Nothing on this screen is pre-selected (ADR-0007 principle 2): what the run
+# installs regardless of the selection is printed above the list instead, so
+# "required" and "optional" are told apart by the screen rather than by which
+# boxes happen to be ticked.
 
 # Registry rows: id|group|default|label
-# group: agent | tool | setting. default applies to the interactive screen;
-# non-interactive defaults are AGENTYARD_DEFAULT_AGENTS only.
-AGENTYARD_DEFAULT_AGENTS="claude,codex,copilot"
+# group: agent | tool | setting. default is 0 for every row; the column stays
+# so a future row could ship pre-selected with a stated reason.
+AGENTYARD_DEFAULT_AGENTS=""
 
 registry_rows() {
   cat <<'EOF'
-claude|agent|1|Claude Code (Anthropic)
-codex|agent|1|Codex CLI (OpenAI)
-copilot|agent|1|GitHub Copilot CLI (GitHub, 有料契約が必要)
+claude|agent|0|Claude Code (Anthropic)
+codex|agent|0|Codex CLI (OpenAI)
+copilot|agent|0|GitHub Copilot CLI (GitHub, 有料契約が必要)
 antigravity|agent|0|Antigravity CLI (Google, 18 歳以上・インストールで規約が適用)
 gemini|agent|0|Gemini CLI (Google, Gemini Code Assist 契約者向け)
 docker|tool|0|Docker (Linux: Docker Engine / macOS: Desktop・OrbStack・Colima から選択)
@@ -33,7 +38,7 @@ ast-grep|tool|0|ast-grep (構文を理解した検索・置換)
 yq|tool|0|yq (YAML 版 jq)
 markitdown|tool|0|markitdown (Office 文書などを Markdown に変換)
 bun|tool|0|Bun
-agents-md|setting|1|ユーザースコープの AGENTS.md (~/.agents/AGENTS.md) と各エージェントへの連携
+agents-md|setting|0|ユーザースコープの AGENTS.md (~/.agents/AGENTS.md) と各エージェントへの連携
 docker-group|setting|0|docker グループに自分を追加 (sudo なしで docker を使える・実質 root 権限)
 zsh-login-shell|setting|0|ログインシェルを zsh に変更
 mise-trust|setting|0|mise: 指定ディレクトリ配下のリポジトリを自動で信頼する
@@ -198,8 +203,8 @@ _select_print_menu() {
     if [ "$group" != "$last" ]; then
       case "$group" in
       agent) printf '\n  [AI エージェント]\n' ;;
-      tool) printf '\n  [ツール (opt-in)]\n' ;;
-      setting) printf '\n  [設定 (opt-in)]\n' ;;
+      tool) printf '\n  [ツール]\n' ;;
+      setting) printf '\n  [設定]\n' ;;
       esac
       last="$group"
     fi
@@ -255,8 +260,25 @@ _select_whiptail() {
   for id in $result; do select_add "$id"; done
 }
 
+# What the run installs regardless of the selection, so the screen tells
+# required and optional apart (ADR-0007 principle 2).
+print_always_installed() {
+  printf '\n必ず入るもの:\n'
+  case "$(os_kind)" in
+  linux)
+    printf '  - 基本ツール (apt): build-essential, git, git-lfs, gh, jq, ripgrep, tree, fzf, fd, bubblewrap, socat ほか\n'
+    ;;
+  macos)
+    printf '  - 基本ツール (Homebrew): git-lfs, gh, jq, ripgrep, tree, fzf, fd（Homebrew 本体も必要なら入れます）\n'
+    ;;
+  esac
+  printf '  - ランタイム (mise): node, pnpm, uv\n'
+  printf '  - Git とシェルの設定 (env.sh / interactive.sh)\n'
+}
+
 # Entry point: populates SELECTED.
 select_components() {
+  print_always_installed
   if is_non_interactive; then
     select_resolve_noninteractive
   else
@@ -268,7 +290,11 @@ select_components() {
     fi
     _select_drop_unavailable
   fi
-  printf '\n選択された項目:\n'
+  if [ -z "$SELECTED" ]; then
+    printf '\n選んだ項目: なし（必ず入るものだけをインストールします）\n'
+    return 0
+  fi
+  printf '\n選んだ項目:\n'
   local id
   for id in $SELECTED; do printf '  - %s\n' "$(registry_label "$id")"; done
 }

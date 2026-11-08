@@ -34,9 +34,10 @@ Options:
 
 Environment (non-interactive selection):
   AGENTYARD_AGENTS   claude,codex,copilot,antigravity,gemini
-                     (default: claude,codex,copilot)
-  AGENTYARD_WITH     docker,zsh,tmux,zellij,aws,azure,gcloud,ast-grep,yq,
-                     markitdown,bun,agents-md,mise-trust,wsl-browser,apparmor
+                     (no default: nothing is installed unless listed)
+  AGENTYARD_WITH     docker,docker-group,zsh,zsh-login-shell,tmux,zellij,aws,
+                     azure,gcloud,ast-grep,yq,markitdown,bun,agents-md,
+                     mise-trust,wsl-browser,apparmor
                      ("power" = ast-grep,yq,markitdown)
   AGENTYARD_DOCKER_GROUP=1        add the user to the docker group
   AGENTYARD_MISE_TRUSTED_PATHS    directories for mise-trust (comma separated)

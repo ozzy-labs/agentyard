@@ -24,14 +24,14 @@ curl --proto '=https' --tlsv1.2 -fsSL \
   https://github.com/ozzy-labs/agentyard/releases/latest/download/install.sh | bash
 ```
 
-エージェントと opt-in の項目は選択画面で選びます。リリースを固定するには、`bash` の後ろに `-s -- --ref vX.Y.Z` を付けてください。
+選択画面の項目は既定ですべてオフです。エージェントと opt-in の項目を選ばなかった場合は、必ず入るもの（基本ツール、ランタイム、Git とシェルの設定）だけが入ります。リリースを固定するには、`bash` の後ろに `-s -- --ref vX.Y.Z` を付けてください。
 
-非対話モードの例:
+非対話モードは、挙げたものだけを入れます（既定値はありません）:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -fsSL \
   https://github.com/ozzy-labs/agentyard/releases/latest/download/install.sh |
-  AGENTYARD_ASSUME_YES=1 AGENTYARD_WITH=docker,agents-md bash
+  AGENTYARD_ASSUME_YES=1 AGENTYARD_AGENTS=claude,codex AGENTYARD_WITH=docker,agents-md bash
 ```
 
 ### 実行前に確かめる（任意）
@@ -59,7 +59,9 @@ bash install.sh
 
 入れ方の優先順: ツールの公式推奨の方法 → OS のパッケージ管理（apt / Homebrew）→ mise。
 
-### 既定
+### 必ず入るもの
+
+選択画面で何を選んでも入ります。
 
 | 区分 | Linux | macOS |
 |---|---|---|
@@ -71,13 +73,15 @@ bash install.sh
 
 ### AI エージェント（選択式）
 
-| エージェント | 既定 | 入れ方 |
-|---|---|---|
-| Claude Code | ✓ | 公式インストーラ |
-| Codex CLI | ✓ | 公式インストーラ |
-| GitHub Copilot CLI | ✓ | 公式インストーラ（Copilot の契約が必要） |
-| Antigravity CLI | opt-in | 公式インストーラ（18 歳以上、対応国。インストール時点で規約が適用） |
-| Gemini CLI | opt-in | npm パッケージを mise で管理（Gemini Code Assist 契約者向け） |
+5 つすべて opt-in です（既定でチェックは付きません）。
+
+| エージェント | 入れ方 |
+|---|---|
+| Claude Code | 公式インストーラ |
+| Codex CLI | 公式インストーラ |
+| GitHub Copilot CLI | 公式インストーラ（Copilot の契約が必要） |
+| Antigravity CLI | 公式インストーラ（18 歳以上、対応国。インストール時点で規約が適用） |
+| Gemini CLI | npm パッケージを mise で管理（Gemini Code Assist 契約者向け） |
 
 agentyard はエージェントをインストールするだけで、操作はしません。各エージェントの利用規約には最初のログイン時に同意します。ただし Antigravity CLI はインストールした時点で規約が適用されるため、選択画面の項目名にそう書いてあります。agentyard が入れるものすべてのライセンス・規約の適用時点・データ収集の既定・商用の条件は [docs/third-party.md](docs/third-party.md) に根拠付きでまとめてあります。
 
@@ -119,7 +123,7 @@ agentyard はエージェントをインストールするだけで、操作は�
 | 変数 | 意味 |
 |---|---|
 | `AGENTYARD_ASSUME_YES=1`（または `-y`、`CI=true`） | 非対話モード |
-| `AGENTYARD_AGENTS` | 入れるエージェント（既定 `claude,codex,copilot`） |
+| `AGENTYARD_AGENTS` | 入れるエージェント（既定値なし。挙げたものだけ入ります） |
 | `AGENTYARD_WITH` | opt-in の項目（カンマ区切り、上表参照） |
 | `AGENTYARD_DOCKER_GROUP=1` | `AGENTYARD_WITH=docker-group` と同じ |
 | `AGENTYARD_MISE_TRUSTED_PATHS` | `mise-trust` で信頼するディレクトリ（カンマ区切り） |

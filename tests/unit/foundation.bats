@@ -113,9 +113,21 @@ setup() {
 
 # --- select ----------------------------------------------------------------
 
-@test "select: non-interactive defaults to three agents" {
+@test "select: nothing is selected without AGENTYARD_AGENTS / _WITH" {
   select_resolve_noninteractive
-  [ "$SELECTED" = "claude codex copilot" ]
+  [ -z "$SELECTED" ]
+}
+
+@test "select: no registry row ships pre-selected" {
+  run bash -c "source '$SCRIPT_ROOT/scripts/lib/select.sh'; registry_rows | awk -F'|' '\$3 != 0'"
+  [ -z "$output" ]
+}
+
+@test "select: the mandatory list is printed before the choices" {
+  os_kind() { printf 'linux'; }
+  run print_always_installed
+  [[ "$output" == *"必ず入るもの"* ]]
+  [[ "$output" == *"mise"* ]]
 }
 
 @test "select: AGENTYARD_AGENTS and AGENTYARD_WITH" {
@@ -130,9 +142,9 @@ setup() {
 }
 
 @test "select: unknown ids are ignored with a warning" {
-  run bash -c "source '$SCRIPT_ROOT/scripts/lib/core.sh'; source '$SCRIPT_ROOT/scripts/lib/select.sh'; AGENTYARD_WITH=bogus select_resolve_noninteractive; echo \"[\$SELECTED]\""
+  run bash -c "source '$SCRIPT_ROOT/scripts/lib/core.sh'; source '$SCRIPT_ROOT/scripts/lib/select.sh'; AGENTYARD_AGENTS=claude AGENTYARD_WITH=bogus select_resolve_noninteractive; echo \"[\$SELECTED]\""
   [[ "$output" == *"不明な項目"* ]]
-  [[ "$output" == *"[claude codex copilot]"* ]]
+  [[ "$output" == *"[claude]"* ]]
 }
 
 @test "select: legacy INSTALL_* variables are mapped" {

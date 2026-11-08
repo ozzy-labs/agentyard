@@ -38,7 +38,7 @@ AI エージェントを使った開発のためのホストを構築する**公
 ### 2. 原則
 
 1. エージェントがホストで安全に動けることを最優先にする（エージェント CLI、サンドボックス、認証）。
-2. 既定は最小限、かつ実用的にする。好みが分かれるもの、リスクを伴うものは opt-in にする。例外として、主要なエージェント CLI は agentyard の目的そのものなので既定で入れる。
+2. 既定は最小限にする。**選択画面の項目はすべて既定でオフ**にし、選択によらず必ず入るもの（基本ツール、ランタイム、Git とシェルの設定）を画面の先頭に明示する。どの項目に最初からチェックが付くかという判断を画面から排除し、必須と任意を画面で判別できるようにする（2026-11-08 改訂。エージェント CLI を既定オンとする例外は廃止した）。非対話モードも同じく、`AGENTYARD_AGENTS` / `AGENTYARD_WITH` で明示しないものは入れない。
 3. 個人の好みには触れない（プロンプト、エディタ、ロケール、エージェントの設定ファイル）。
 4. パッケージは **① ツールの公式推奨の方法 → ② OS 標準のパッケージ管理（apt / Homebrew）→ ③ mise** の優先順で入れる。言語ランタイムは mise、Python 製アプリは uv tool。推奨と違う方法を選ぶ場合は理由を明記する。
 5. プロジェクト固有のもの（lint ツール、言語、バージョン固定）は各リポジトリの `mise.toml` に任せる。
@@ -73,7 +73,7 @@ Ubuntu 22.04 以前、Debian を含むその他の Linux、WSL1、Intel Mac、�
 | サンドボックス | bubblewrap、socat | 不要（Seatbelt） |
 | ランタイム | mise（公式インストーラ）、node LTS、pnpm、uv | 同じ |
 
-**エージェント CLI（選択式、常に最新）**: Claude Code、Codex、Copilot CLI は既定でチェックあり、Antigravity CLI と Gemini CLI は opt-in。Gemini 以外は Linux / macOS とも公式インストーラ、Gemini CLI は mise の npm バックエンド（`npm:@google/gemini-cli@latest`）で入れる。Antigravity CLI は、WSL でキーリングを用いたログインが成立することを実機で確認できるまで opt-in とする（確認後に既定へ戻すかを判断する）。必要なアカウントや契約は選択画面の項目名に示す。agentyard はエージェントを操作しない。
+**エージェント CLI（選択式、常に最新）**: 5 つすべて opt-in（既定でチェックなし。原則 2）。Gemini 以外は Linux / macOS とも公式インストーラ、Gemini CLI は mise の npm バックエンド（`npm:@google/gemini-cli@latest`）で入れる。Antigravity CLI は、WSL でキーリングを用いたログインが成立することを実機で確認できるまで opt-in とする（確認後に既定へ戻すかを判断する）。必要なアカウントや契約は選択画面の項目名に示す。agentyard はエージェントを操作しない。
 
 **第三者ソフトウェアの告知**: 実行中に告知は出さない（実行時の警告は増やさない）。選択画面の項目名に書くのは「**インストール時点で規約が適用される**もの」（agentyard がその install を代行するため。Antigravity CLI が該当）と「**商用利用に有償ライセンスが必要**なもの」（macOS の Docker Desktop / OrbStack）に限る。テレメトリの既定は、1 コマンドで変更でき本人の設定として管理できるため項目名には書かず、全導入物の棚卸し（[docs/third-party.md](../third-party.md)、ライセンス・規約の同意タイミング・データ収集の既定・商用の条件を根拠 URL 付きで記録）に集約する。
 
@@ -111,7 +111,7 @@ Ubuntu 22.04 以前、Debian を含むその他の Linux、WSL1、Intel Mac、�
 
 ### 7. コマンド
 
-- `install`: セットアップ。対話モードは番号一覧の選択（whiptail があればチェックボックス）。非対話モードは `AGENTYARD_AGENTS`、`AGENTYARD_WITH`、`AGENTYARD_DOCKER_GROUP`。環境変数は `AGENTYARD_*` に統一し、旧名は移行期間中受け付ける。
+- `install`: セットアップ。対話モードは番号一覧の選択（whiptail があればチェックボックス）。いずれも既定でチェックは付かず、必ず入るものを選択画面の先頭に表示する。非対話モードは `AGENTYARD_AGENTS`、`AGENTYARD_WITH`、`AGENTYARD_DOCKER_GROUP`（既定値はなく、挙げたものだけを入れる）。環境変数は `AGENTYARD_*` に統一し、旧名は移行期間中受け付ける。
 - `doctor`: ツールの有無（非ログイン・非対話シェルからも）、エージェントのバージョン・ログイン・サンドボックス要件、AGENTS.md の連携状況、WSL の推奨設定、PATH の重複、新しいリリース、apt リポジトリの Ubuntu バージョン。
 - `doctor --repo <path>`: 各エージェントがリポジトリの AGENTS.md を読む状態か（公式ドキュメントの条件のみで判定）。
 - `update`: 新しいリリースの確認と通知。agentyard が入れたものだけを更新する（`mise self-update`、`mise upgrade <tools>`、`uv tool upgrade markitdown`、自動更新しないエージェント、Brewfile による `brew bundle`）。apt はユーザーに任せる。

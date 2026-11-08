@@ -4,6 +4,7 @@
 	"packages": {
 		".": {
 			"package-name": "agentyard",
+			"bump-minor-pre-major": true,
 			"changelog-path": "CHANGELOG.md",
 			"include-component-in-tag": false,
 			"draft": false,

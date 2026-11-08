@@ -17,14 +17,14 @@ install_zsh() {
     apt_install zsh || return 1
   fi
   if [ -d "${ZSH:-$HOME/.oh-my-zsh}" ]; then
-    log_skip "oh-my-zsh は導入済みです"
+    log_skip "oh-my-zsh はインストール済みです"
   else
     local keep=no
     # Never replace an existing ~/.zshrc (ADR-0007 principle 7).
     [ -f "$HOME/.zshrc" ] && keep=yes
     if quiet_run _install_ohmyzsh "$keep"; then
       state_add component oh-my-zsh
-      log_ok "oh-my-zsh を導入しました"
+      log_ok "oh-my-zsh をインストールしました"
       if [ "$keep" = "yes" ]; then
         log_info "既存の ~/.zshrc は残しました。oh-my-zsh を使うには ~/.oh-my-zsh/templates/zshrc.zsh-template を参考に設定してください。"
       fi
@@ -68,7 +68,7 @@ install_zellij() {
 install_aws() {
   log_section "AWS CLI"
   if [ -x "$HOME/.local/bin/aws" ] || { has_cmd aws && ! { [ "$(os_kind)" = "linux" ] && apt_pkg_installed awscli; }; }; then
-    log_skip "aws は導入済みです"
+    log_skip "aws はインストール済みです"
     return 0
   fi
   if [ "$(os_kind)" = "linux" ] && apt_pkg_installed awscli; then
@@ -83,7 +83,7 @@ install_aws() {
     apt_install gnupg || return 1
     if quiet_run run_remote_installer https://awscli.amazonaws.com/v2/install.sh bash --quiet; then
       state_add component aws
-      log_ok "AWS CLI を導入しました (~/.local/bin/aws)"
+      log_ok "AWS CLI をインストールしました (~/.local/bin/aws)"
     else
       log_warn "AWS CLI のインストールに失敗しました"
     fi
@@ -150,7 +150,7 @@ install_markitdown() {
     return 1
   fi
   if uv tool list 2>/dev/null | grep -q '^markitdown '; then
-    log_skip "markitdown は導入済みです"
+    log_skip "markitdown はインストール済みです"
     return 0
   fi
   if uv tool install 'markitdown[all]' >/dev/null 2>&1; then

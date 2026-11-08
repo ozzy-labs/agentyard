@@ -109,10 +109,10 @@ install_agent() {
       # Record it so update covers it; update uses the vendor's own updater.
       state_add agent "$id"
     fi
-    log_skip "$label は導入済みです"
+    log_skip "$label はインストール済みです"
     return 0
   fi
-  log_info "$label を公式の方法で導入します"
+  log_info "$label をインストールします"
   # Before the installer: vendor scripts look at PATH to decide whether to
   # offer rc-file edits, and the binary must be visible right after.
   session_path_setup
@@ -125,7 +125,7 @@ install_agent() {
   if agent_present "$id"; then
     [ "$rc" -eq 0 ] || log_warn "$label のインストーラは exit $rc で終了しましたが、$(agent_bin "$id") は使えます"
     state_add agent "$id"
-    log_ok "$label を導入しました"
+    log_ok "$label をインストールしました"
     return 0
   fi
   if [ "$rc" -eq 0 ]; then
@@ -133,7 +133,7 @@ install_agent() {
     # unexpected — but the installer reported success, so trust it rather than
     # calling a finished install a failure.
     state_add agent "$id"
-    log_warn "$label を導入しましたが、$(agent_bin "$id") がこのセッションの PATH に見つかりません。新しいターミナルで確認してください"
+    log_warn "$label をインストールしましたが、$(agent_bin "$id") がこのセッションの PATH に見つかりません。新しいターミナルで確認してください"
     return 0
   fi
   log_error "$label のインストールに失敗しました"

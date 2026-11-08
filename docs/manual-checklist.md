@@ -45,6 +45,12 @@ CI（Docker コンテナ、GitHub ホストランナー）では確認できな�
 - [ ] Docker の選択（Docker Desktop / OrbStack / Colima）で、それぞれ入る
 - [ ] `./install.sh update` が agentyard の Brewfile にあるものだけを更新する
 
+## リリース
+
+- [ ] release PR（`chore(main): release X.Y.Z`）の CI が、承認操作なしで走る（GitHub App トークンの設定が効いているか。未設定なら `Awaiting approval` のまま止まる）
+- [ ] release PR のマージで tag と GitHub Release が作られ、`agentyard.tar.gz` / `install.sh` とその `.sha256` が添付される
+- [ ] `curl ... releases/latest/download/install.sh | bash` が新しい版を取得する
+
 ## uninstall
 
 - [ ] `./install.sh uninstall` の後、シェル設定ファイルと指示ファイルから agentyard のブロックが消え、ユーザーの内容は残る

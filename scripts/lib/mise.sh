@@ -38,17 +38,17 @@ mise_at_home() {
 ensure_mise() {
   if [ -x "$MISE_BIN" ]; then
     if mise_is_official_install; then
-      log_skip "mise は導入済みです ($("$MISE_BIN" --version 2>/dev/null | head -n1))"
+      log_skip "mise はインストール済みです ($("$MISE_BIN" --version 2>/dev/null | head -n1))"
     else
       log_skip "mise は $MISE_BIN にあります（その入れ方で更新してください）"
     fi
     return 0
   fi
-  log_info "mise を公式インストーラで導入します"
+  log_info "mise をインストールします"
   run_remote_installer https://mise.run sh >/dev/null || die "mise のインストールに失敗しました"
   MISE_BIN="$HOME/.local/bin/mise"
   state_add component mise
-  log_ok "mise を導入しました"
+  log_ok "mise をインストールしました"
 }
 
 # mise_global <tool> [spec]
@@ -72,7 +72,7 @@ mise_global() {
     state_add mise "$tool" "$spec"
     log_ok "$tool@$spec (mise)"
   else
-    log_warn "$tool@$spec の導入に失敗しました（手動: mise use -g $tool@$spec）"
+    log_warn "$tool@$spec のインストールに失敗しました（手動: mise use -g $tool@$spec）"
     return 1
   fi
 }

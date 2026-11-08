@@ -167,7 +167,7 @@ ubuntu_install_gh() {
     official=1
   fi
   if [ "$official" = "0" ] && has_cmd gh && ! apt_pkg_installed gh; then
-    log_skip "gh は apt 以外の方法で導入されています（$(command -v gh)）"
+    log_skip "gh は apt 以外の方法でインストールされています（$(command -v gh)）"
     return 0
   fi
   if ubuntu_gh_replace_pending; then

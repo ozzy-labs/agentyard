@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.3](https://github.com/ozzy-labs/agentyard/compare/v0.5.2...v0.5.3) (2026-11-08)
+
+
+### Bug Fixes
+
+* **agents:** drive the Codex installer unattended and judge installs by the binary ([#205](https://github.com/ozzy-labs/agentyard/issues/205)) ([fe8cf56](https://github.com/ozzy-labs/agentyard/commit/fe8cf56f55de3af8180328662fb983637d747454))
+
+
+### Continuous Integration
+
+* **release:** open the release PR with a GitHub App token so its CI runs ([#207](https://github.com/ozzy-labs/agentyard/issues/207)) ([5929ec8](https://github.com/ozzy-labs/agentyard/commit/5929ec86858de6d11aa660519764399bb9728ef0))
+
 ## [0.5.2](https://github.com/ozzy-labs/agentyard/compare/v0.5.1...v0.5.2) (2026-11-04)
 
 

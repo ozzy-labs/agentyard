@@ -33,16 +33,26 @@ install_zsh() {
     fi
   fi
   state_add component zsh
-  # Login shell change: interactive confirmation only (needs a password).
+}
+
+# Changing the login shell is decided on the selection screen (zsh-login-shell),
+# not asked for mid-run.
+install_zsh_login_shell() {
+  log_section "ログインシェル"
   local zsh_path
-  zsh_path="$(command -v zsh)"
-  if [ "$(os_kind)" = "linux" ] && [ "${SHELL:-}" != "$zsh_path" ] && ! is_non_interactive; then
-    if ask_yes_no "ログインシェルを zsh に変更しますか？" n; then
-      # sudo reuses the cached credentials; plain chsh would ask for the
-      # user's password again.
-      sudo chsh -s "$zsh_path" "$(id -un)" && log_ok "ログインシェルを zsh に変更しました（次回ログインから有効）"
-    fi
+  if ! zsh_path="$(command -v zsh)"; then
+    log_skip "zsh が見つかりません（zsh も一緒に選んでください）"
+    return 0
   fi
+  if [ "${SHELL:-}" = "$zsh_path" ]; then
+    log_skip "ログインシェルは既に zsh です"
+    return 0
+  fi
+  # sudo reuses the cached credentials; plain chsh would ask for the user's
+  # password again.
+  sudo chsh -s "$zsh_path" "$(id -un)" || return 1
+  state_add setting login-shell "$zsh_path"
+  log_ok "ログインシェルを zsh に変更しました（次回ログインから有効）"
 }
 
 # --- terminal multiplexers ---------------------------------------------------

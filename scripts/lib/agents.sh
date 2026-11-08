@@ -53,10 +53,44 @@ _agent_npm_legacy_path() {
   return 1
 }
 
+# True when the agent sits exactly where agentyard's own install method puts
+# it: ~/.local/bin for the vendor installers, a mise shim for gemini.
+_agent_at_agentyard_path() {
+  local path
+  path="$(command -v "$(agent_bin "$1")" 2>/dev/null)" || return 1
+  case "$1" in
+  gemini)
+    case "$path" in
+    */mise/shims/* | */mise/installs/*) return 0 ;;
+    esac
+    return 1
+    ;;
+  *) [ "$path" = "$HOME/.local/bin/$(agent_bin "$1")" ] ;;
+  esac
+}
+
+# Vendor installers do more than install. codex ends by offering to launch the
+# CLI, copilot by offering to edit a shell rc file; both read /dev/tty
+# directly, so neither redirecting output nor piping stdin suppresses them,
+# and what they do decides the installer's exit status. Each agent therefore
+# states how to run its installer unattended.
 _agent_install() {
   case "$1" in
   claude) run_remote_installer https://claude.ai/install.sh bash ;;
-  codex) run_remote_installer https://chatgpt.com/codex/install.sh sh ;;
+  codex)
+    # Ends with "Start Codex now? [y/N]" read from /dev/tty; accepting it runs
+    # the TUI and that exit status becomes the installer's, so the install is
+    # reported as failed even though the binary is in place.
+    # CODEX_NON_INTERACTIVE=1 skips the prompts only — the installer still
+    # sets up PATH. https://releases.openai.com/codex/install.sh
+    (
+      export CODEX_NON_INTERACTIVE=1
+      run_remote_installer https://chatgpt.com/codex/install.sh sh
+    )
+    ;;
+  # Asks "Would you like to add it to <rc file>?" only when copilot is not
+  # already on PATH after the install; install_agent puts ~/.local/bin on PATH
+  # first, so the question never comes up and agentyard keeps owning PATH.
   copilot) run_remote_installer https://gh.io/copilot-install bash ;;
   antigravity) run_remote_installer https://antigravity.google/cli/install.sh bash ;;
   gemini) mise_global "npm:@google/gemini-cli" latest ;;
@@ -64,25 +98,36 @@ _agent_install() {
 }
 
 install_agent() {
-  local id="$1" label
+  local id="$1" label rc=0
   label="$(agent_label "$id")"
   if agent_present "$id"; then
     if [ "$id" = "codex" ] && _agent_npm_legacy_path codex; then
       log_warn "$label は npm（mise の Node 配下）で入っています。Node を更新すると消えるため、公式インストーラへの切り替えを推奨します: npm uninstall -g @openai/codex && agentyard を再実行"
+    elif ! state_has agent "$id" && _agent_at_agentyard_path "$id"; then
+      # Installed by agentyard but not recorded (e.g. an install that was
+      # wrongly reported as failed): adopt it so update covers it.
+      state_add agent "$id"
     fi
     log_skip "$label は導入済みです"
     return 0
   fi
   log_info "$label を公式の方法で導入します"
-  if _agent_install "$id" >/dev/null 2>&1; then
-    session_path_setup
-    hash -r 2>/dev/null || true
+  # Before the installer: vendor scripts look at PATH to decide whether to
+  # offer rc-file edits, and the binary must be visible right after.
+  session_path_setup
+  quiet_run _agent_install "$id" || rc=$?
+  hash -r 2>/dev/null || true
+  # Judge the outcome by the binary, not by the exit status: what an installer
+  # does after installing (launching the CLI, offering a shell edit) must not
+  # turn a working install into a reported failure.
+  if agent_present "$id"; then
+    [ "$rc" -eq 0 ] || log_warn "$label のインストーラは exit $rc で終了しましたが、$(agent_bin "$id") は使えます"
     state_add agent "$id"
     log_ok "$label を導入しました"
-  else
-    log_error "$label のインストールに失敗しました"
-    return 1
+    return 0
   fi
+  log_error "$label のインストールに失敗しました"
+  return 1
 }
 
 install_agents() {
@@ -103,10 +148,7 @@ update_agents() {
     case "$id" in
     codex)
       log_info "Codex CLI を更新します（公式インストーラを再実行）"
-      (
-        export CODEX_NON_INTERACTIVE=1
-        run_remote_installer https://chatgpt.com/codex/install.sh sh >/dev/null
-      ) && log_ok "Codex CLI" || log_warn "Codex CLI の更新に失敗しました"
+      quiet_run _agent_install codex && log_ok "Codex CLI" || log_warn "Codex CLI の更新に失敗しました"
       ;;
     copilot)
       copilot update >/dev/null 2>&1 && log_ok "GitHub Copilot CLI" || log_warn "GitHub Copilot CLI の更新に失敗しました"

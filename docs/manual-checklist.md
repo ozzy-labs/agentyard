@@ -12,6 +12,7 @@ CI（Docker コンテナ、GitHub ホストランナー）では確認できな�
 - [ ] `wsl-browser` を選択すると、`gh auth login --web` で Windows のブラウザが開く
 - [ ] 新しいターミナル（ログインシェル）と VS Code の統合ターミナル（非ログインシェル）の両方で、`claude`、`codex`、`node`、`uv` が見える
 - [ ] `./install.sh doctor` の WSL セクションが妥当な内容を表示する
+- [ ] インストール中にベンダーのインストーラが質問を出さない（例: Codex の `Start Codex now?`）。CI は TTY なしで動くため検出できない
 
 ## AI エージェントのログイン
 

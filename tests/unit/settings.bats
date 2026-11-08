@@ -31,7 +31,7 @@ setup() {
 
 @test "docker-group: skipped when the user is already a member" {
   has_cmd() { return 0; }
-  id() { case "$*" in -nG*) printf 'users docker' ;; -un) printf 'tester' ;; esac; }
+  id() { case "$*" in -nG*) printf 'users docker' ;; -un) printf 'tester' ;; esac }
   run install_docker_group
   [ "$status" -eq 0 ]
   [[ "$output" == *"既に docker グループに所属"* ]]
@@ -40,7 +40,7 @@ setup() {
 
 @test "docker-group: adds the user and records it" {
   has_cmd() { return 0; }
-  id() { case "$*" in -nG*) printf 'users' ;; -un) printf 'tester' ;; esac; }
+  id() { case "$*" in -nG*) printf 'users' ;; -un) printf 'tester' ;; esac }
   run install_docker_group
   [ "$status" -eq 0 ]
   grep -q "sudo usermod -aG docker tester" "$MOCK_LOG"
@@ -75,6 +75,14 @@ setup() {
   PATH="$HOME/bin:$PATH" SHELL=/bin/bash run install_zsh_login_shell
   [ "$status" -eq 0 ]
   grep -q "sudo chsh -s $HOME/bin/zsh tester" "$MOCK_LOG"
+}
+
+@test "zsh-login-shell: records the previous shell for uninstall" {
+  printf '#!/bin/sh\n' >"$HOME/bin/zsh"
+  chmod +x "$HOME/bin/zsh"
+  id() { printf 'tester'; }
+  PATH="$HOME/bin:$PATH" SHELL=/bin/bash install_zsh_login_shell
+  [ "$(state_get setting login-shell 4)" = "/bin/bash" ]
 }
 
 @test "zsh-login-shell: skipped when zsh is missing" {

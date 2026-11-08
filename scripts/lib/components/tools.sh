@@ -51,7 +51,8 @@ install_zsh_login_shell() {
   # sudo reuses the cached credentials; plain chsh would ask for the user's
   # password again.
   sudo chsh -s "$zsh_path" "$(id -un)" || return 1
-  state_add setting login-shell "$zsh_path"
+  # Record the previous shell so uninstall can show how to switch back.
+  state_add setting login-shell "$zsh_path" "${SHELL:-}"
   log_ok "ログインシェルを zsh に変更しました（次回ログインから有効）"
 }
 

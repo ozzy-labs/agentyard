@@ -93,7 +93,10 @@ printf '  - インストールしたツール本体（apt / Homebrew / mise / �
 printf '  - mise のグローバル設定に追加した項目: %s\n' "$(state_list mise | tr '\n' ' ')"
 printf '  - Git の設定（init.defaultBranch など）\n'
 state_has setting docker-group && printf '  - docker グループへの所属（sudo gpasswd -d %s docker で外せます）\n' "$(id -un)"
-state_has component zsh && printf '  - ログインシェルの変更（chsh で戻せます）\n'
+if state_has setting login-shell; then
+  prev_shell="$(state_get setting login-shell 4 2>/dev/null || true)"
+  printf '  - ログインシェルの変更（戻す場合: chsh -s %s）\n' "${prev_shell:-<元のシェル>}"
+fi
 
 if [ "$DRY_RUN" = "0" ]; then
   rm -rf "$AGENTYARD_CONFIG_DIR"

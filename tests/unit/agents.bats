@@ -45,7 +45,7 @@ _mock_installer() {
   MOCK_RC=130 run install_agent codex
   [ "$status" -eq 0 ]
   [[ "$output" == *"exit 130"* ]]
-  [[ "$output" == *"Codex CLI を導入しました"* ]]
+  [[ "$output" == *"Codex CLI をインストールしました"* ]]
   state_has agent codex
 }
 
@@ -77,7 +77,7 @@ _mock_installer() {
   chmod +x "$BIN_DIR/codex"
   run install_agent codex
   [ "$status" -eq 0 ]
-  [[ "$output" == *"導入済み"* ]]
+  [[ "$output" == *"インストール済み"* ]]
   state_has agent codex
 }
 

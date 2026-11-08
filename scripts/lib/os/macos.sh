@@ -18,9 +18,9 @@ macos_require_admin() {
 
 ensure_homebrew() {
   if [ -x /opt/homebrew/bin/brew ]; then
-    log_skip "Homebrew は導入済みです"
+    log_skip "Homebrew はインストール済みです"
   else
-    log_info "Homebrew を公式インストーラで導入します（Xcode Command Line Tools も必要に応じて入ります）"
+    log_info "Homebrew をインストールします（Xcode Command Line Tools も必要に応じて入ります）"
     ensure_sudo
     if is_non_interactive; then
       (

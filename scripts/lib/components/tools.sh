@@ -44,7 +44,13 @@ install_zsh_login_shell() {
     log_skip "zsh が見つかりません（zsh も一緒に選んでください）"
     return 0
   fi
-  if [ "${SHELL:-}" = "$zsh_path" ]; then
+  # The account's login shell, not $SHELL: the change takes effect at the next
+  # login, so $SHELL still names the old shell for the rest of this session and
+  # a re-run would call chsh again.
+  local current
+  current="$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7)"
+  [ -n "$current" ] || current="${SHELL:-}"
+  if [ "$current" = "$zsh_path" ]; then
     log_skip "ログインシェルは既に zsh です"
     return 0
   fi
@@ -52,7 +58,7 @@ install_zsh_login_shell() {
   # password again.
   sudo chsh -s "$zsh_path" "$(id -un)" || return 1
   # Record the previous shell so uninstall can show how to switch back.
-  state_add setting login-shell "$zsh_path" "${SHELL:-}"
+  state_add setting login-shell "$zsh_path" "$current"
   log_ok "ログインシェルを zsh に変更しました（次回ログインから有効）"
 }
 

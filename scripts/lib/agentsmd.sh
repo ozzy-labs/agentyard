@@ -150,8 +150,14 @@ agents_md_wire() {
   fi
 
   if agent_present copilot; then
-    state_add setting copilot-dirs 1
-    log_ok "Copilot CLI: COPILOT_CUSTOM_INSTRUCTIONS_DIRS に ~/.agents を追加（env.sh）"
+    # env.sh is generated from this record, so it is also the "already wired"
+    # marker.
+    if state_has setting copilot-dirs; then
+      log_skip "Copilot CLI: 連携済みです"
+    else
+      state_add setting copilot-dirs 1
+      log_ok "Copilot CLI: COPILOT_CUSTOM_INSTRUCTIONS_DIRS に ~/.agents を追加（env.sh）"
+    fi
   fi
 }
 

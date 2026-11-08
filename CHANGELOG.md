@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/ozzy-labs/agentyard/compare/v0.5.3...v0.6.0) (2026-11-08)
+
+
+### Features
+
+* **setup:** ask everything before the install starts ([#210](https://github.com/ozzy-labs/agentyard/issues/210)) ([b2cbdc3](https://github.com/ozzy-labs/agentyard/commit/b2cbdc31b92fd525568534cd7ee5c15e02d21ef1))
+
+
+### Documentation
+
+* 導入物のライセンス・規約・データ収集の棚卸しと、実行時告知の廃止 ([#212](https://github.com/ozzy-labs/agentyard/issues/212)) ([0b2f53f](https://github.com/ozzy-labs/agentyard/commit/0b2f53fd01e93b8abec0a0e5ddd87c1bf41bb928))
+
 ## [0.5.3](https://github.com/ozzy-labs/agentyard/compare/v0.5.2...v0.5.3) (2026-11-08)
 
 

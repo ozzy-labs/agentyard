@@ -120,7 +120,7 @@ install_mise_trust() {
     current="$(mise_at_home settings get trusted_config_paths 2>/dev/null | tr -d '[]"' | sed 's/, */,/g')"
     if [ -n "$current" ]; then
       log_skip "trusted_config_paths は設定済みです（$current）"
-      log_info "追加: AGENTYARD_MISE_TRUSTED_PATHS=<dir> ./install.sh install / 削除: ~/.config/mise/config.toml の trusted_config_paths を編集（すべて外す場合は mise settings unset trusted_config_paths）"
+      log_info "追加: mise settings add trusted_config_paths <dir> / 外す: mise settings unset trusted_config_paths（個別に外すには ~/.config/mise/config.toml を編集）"
       return 0
     fi
   fi
@@ -132,7 +132,7 @@ install_mise_trust() {
   fi
   if [ -z "$paths" ]; then
     log_skip "git リポジトリを含む作業ディレクトリを検出できませんでした"
-    log_info "指定する場合: AGENTYARD_MISE_TRUSTED_PATHS=~/github ./install.sh install"
+    log_info "設定する場合: mise settings add trusted_config_paths ~/github（または AGENTYARD_MISE_TRUSTED_PATHS=~/github を指定して再実行）"
     return 0
   fi
   local p ok=1 added=""

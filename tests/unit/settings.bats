@@ -115,6 +115,9 @@ setup() {
   run install_mise_trust </dev/null
   [ "$status" -eq 0 ]
   [[ "$output" == *"検出できませんでした"* ]]
+  # The hint has to work for a `curl | bash` run too, where ./install.sh is absent.
+  [[ "$output" == *"mise settings add trusted_config_paths"* ]]
+  [[ "$output" != *"./install.sh"* ]]
   ! grep -q "settings add" "$MOCK_LOG"
 }
 

@@ -19,12 +19,34 @@ jobs:
     name: Run release-please
     runs-on: ubuntu-latest
     steps:
+      # A release PR opened with GITHUB_TOKEN gets no CI: its pull_request runs
+      # land in "Awaiting approval" (action_required) and a maintainer has to
+      # click Approve every time. An App installation token makes the release PR
+      # an ordinary PR, so lint / test-* run on it by themselves.
+      #
+      # One-time setup (maintainer):
+      #   1. Create a GitHub App owned by ozzy-labs with repository permissions
+      #      Contents: read and write, Pull requests: read and write,
+      #      Issues: read and write (release-please labels its PRs).
+      #   2. Install the App on ozzy-labs/agentyard.
+      #   3. Repository variable RELEASE_APP_ID    = the App's App ID.
+      #   4. Repository secret   RELEASE_APP_PRIVATE_KEY = the App's .pem.
+      # Until the variable exists this step is skipped and the token falls back
+      # to GITHUB_TOKEN, so releases keep working either way.
+      - name: Mint a GitHub App token
+        id: app-token
+        if: ${{ vars.RELEASE_APP_ID != '' }}
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
       # ----------------------------------------------------------------
       # Release 作成時のみ asset 添付ジョブをトリガー

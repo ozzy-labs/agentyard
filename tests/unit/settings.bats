@@ -62,6 +62,8 @@ setup() {
 @test "zsh-login-shell: skipped when zsh is already the login shell" {
   printf '#!/bin/sh\n' >"$HOME/bin/zsh"
   chmod +x "$HOME/bin/zsh"
+  # No passwd entry to read: fall back to $SHELL.
+  getent() { return 1; }
   PATH="$HOME/bin:$PATH" SHELL="$HOME/bin/zsh" run install_zsh_login_shell
   [ "$status" -eq 0 ]
   [[ "$output" == *"既に zsh です"* ]]
@@ -75,6 +77,18 @@ setup() {
   PATH="$HOME/bin:$PATH" SHELL=/bin/bash run install_zsh_login_shell
   [ "$status" -eq 0 ]
   grep -q "sudo chsh -s $HOME/bin/zsh tester" "$MOCK_LOG"
+}
+
+@test "zsh-login-shell: a re-run in the same session does not call chsh again" {
+  printf '#!/bin/sh\n' >"$HOME/bin/zsh"
+  chmod +x "$HOME/bin/zsh"
+  id() { printf 'tester'; }
+  # chsh takes effect at the next login, so $SHELL still names the old shell.
+  getent() { printf 'tester:x:1000:1000::/home/tester:%s/bin/zsh\n' "$HOME"; }
+  PATH="$HOME/bin:$PATH" SHELL=/bin/bash run install_zsh_login_shell
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"既に zsh です"* ]]
+  [ ! -s "$MOCK_LOG" ]
 }
 
 @test "zsh-login-shell: records the previous shell for uninstall" {

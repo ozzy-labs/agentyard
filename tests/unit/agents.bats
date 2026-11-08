@@ -58,6 +58,14 @@ _mock_installer() {
   ! state_has agent codex
 }
 
+@test "codex: an installer that reports success is trusted, with a warning" {
+  _mock_installer
+  MOCK_INSTALLS=0 run install_agent codex
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PATH に見つかりません"* ]]
+  state_has agent codex
+}
+
 @test "codex: CODEX_NON_INTERACTIVE does not leak into the caller" {
   _mock_installer
   install_agent codex

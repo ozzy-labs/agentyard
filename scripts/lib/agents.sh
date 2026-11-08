@@ -104,8 +104,9 @@ install_agent() {
     if [ "$id" = "codex" ] && _agent_npm_legacy_path codex; then
       log_warn "$label は npm（mise の Node 配下）で入っています。Node を更新すると消えるため、公式インストーラへの切り替えを推奨します: npm uninstall -g @openai/codex && agentyard を再実行"
     elif ! state_has agent "$id" && _agent_at_agentyard_path "$id"; then
-      # Installed by agentyard but not recorded (e.g. an install that was
-      # wrongly reported as failed): adopt it so update covers it.
+      # Selected by the user, sitting where agentyard's own method installs it,
+      # yet unrecorded (e.g. an install that was wrongly reported as failed).
+      # Record it so update covers it; update uses the vendor's own updater.
       state_add agent "$id"
     fi
     log_skip "$label は導入済みです"
@@ -117,13 +118,22 @@ install_agent() {
   session_path_setup
   quiet_run _agent_install "$id" || rc=$?
   hash -r 2>/dev/null || true
-  # Judge the outcome by the binary, not by the exit status: what an installer
-  # does after installing (launching the CLI, offering a shell edit) must not
-  # turn a working install into a reported failure.
+  # Judge the outcome by the binary first: what an installer does after
+  # installing (launching the CLI, offering a shell edit) must not turn a
+  # working install into a reported failure. Only a failed installer with
+  # nothing to show for it is an error.
   if agent_present "$id"; then
     [ "$rc" -eq 0 ] || log_warn "$label のインストーラは exit $rc で終了しましたが、$(agent_bin "$id") は使えます"
     state_add agent "$id"
     log_ok "$label を導入しました"
+    return 0
+  fi
+  if [ "$rc" -eq 0 ]; then
+    # All five agents install onto a PATH entry agentyard sets up, so this is
+    # unexpected — but the installer reported success, so trust it rather than
+    # calling a finished install a failure.
+    state_add agent "$id"
+    log_warn "$label を導入しましたが、$(agent_bin "$id") がこのセッションの PATH に見つかりません。新しいターミナルで確認してください"
     return 0
   fi
   log_error "$label のインストールに失敗しました"

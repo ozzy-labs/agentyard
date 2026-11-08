@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/unit/agents.bats
-# Agent CLI installs: the vendor installer is driven unattended, and the
-# outcome is judged by the binary rather than by the installer's exit status.
+# Agent CLI installs: the vendor installer is driven unattended, and an install
+# only counts as failed when the installer failed and left no usable binary.
 
 setup() {
   SCRIPT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

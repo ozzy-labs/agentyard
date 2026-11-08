@@ -152,6 +152,15 @@ apt_pkg_version() {
 # Ubuntu's own `gh` package is far behind upstream (24.04: 2.45, 26.04: 2.46)
 # and lacks commands such as `gh attestation`. When it is installed, offer to
 # replace it with the official build (same package name, newer version).
+# True when Ubuntu's own gh is installed and the official repository is not
+# registered yet: the one case where replacing it is a decision, so it is
+# asked before the install starts (lib/answers.sh).
+ubuntu_gh_replace_pending() {
+  state_has apt-repo github-cli && return 1
+  apt_uri_registered_elsewhere https://cli.github.com/packages && return 1
+  apt_pkg_installed gh
+}
+
 ubuntu_install_gh() {
   local official=0
   if state_has apt-repo github-cli || apt_uri_registered_elsewhere https://cli.github.com/packages; then
@@ -161,12 +170,12 @@ ubuntu_install_gh() {
     log_skip "gh は apt 以外の方法でインストールされています（$(command -v gh)）"
     return 0
   fi
-  if [ "$official" = "0" ] && apt_pkg_installed gh; then
-    log_warn "Ubuntu 標準のリポジトリの gh $(apt_pkg_version gh) が入っています。公式版より大幅に古く、gh attestation などが使えません。"
-    if ! ask_yes_no "GitHub 公式の apt リポジトリを登録して、公式版に更新しますか？" y; then
+  if ubuntu_gh_replace_pending; then
+    if [ "${ANSWER_GH_OFFICIAL:-1}" != "1" ]; then
       log_skip "gh は Ubuntu 標準の版のままにします"
       return 0
     fi
+    log_warn "Ubuntu 標準のリポジトリの gh $(apt_pkg_version gh) を公式版に更新します"
   fi
   apt_repo_add github-cli https://cli.github.com/packages stable main \
     https://cli.github.com/packages/githubcli-archive-keyring.gpg githubcli-archive-keyring.gpg || return 1

@@ -24,6 +24,8 @@ session_path_setup
 
 select_components
 print_agent_notices
+# Ask everything now, so the install itself runs without stopping.
+collect_answers
 if ! is_non_interactive; then
   ask_yes_no "この内容でインストールを開始しますか？" y || {
     log_info "中止しました"
@@ -57,7 +59,9 @@ run_step "ランタイム" install_runtimes
 run_step "AI エージェント" install_agents
 
 selected docker && run_step "Docker" install_docker
+selected docker-group && run_step "docker グループ" install_docker_group
 selected zsh && run_step "zsh" install_zsh
+selected zsh-login-shell && run_step "ログインシェル" install_zsh_login_shell
 selected tmux && run_step "tmux" install_tmux
 selected zellij && run_step "zellij" install_zellij
 selected aws && run_step "AWS CLI" install_aws

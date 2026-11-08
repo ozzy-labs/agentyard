@@ -87,12 +87,14 @@ agentyard はエージェントをインストールするだけで、操作は�
 |---|---|
 | `docker` | Linux: Docker Engine（Docker Desktop の WSL 連携を検出したら入れない）。macOS: Docker Desktop / OrbStack / Colima |
 | `zsh` | zsh + oh-my-zsh（既存の `~/.zshrc` は残す） |
+| `docker-group` | 自分を `docker` グループに追加する。`sudo` なしで docker を使えるが実質 root 権限で、シェルを使えるエージェントはサンドボックスを抜け出せる（[理由](https://docs.docker.com/engine/install/linux-postinstall/)） |
+| `zsh-login-shell` | ログインシェルを zsh にする |
 | `tmux`、`zellij` | ターミナルの分割ツール |
 | `aws`、`azure`、`gcloud` | クラウド CLI |
 | `ast-grep`、`yq`、`markitdown`（`power` で 3 つすべて） | エージェント補助ツール |
 | `bun` | Bun ランタイム |
 | `agents-md` | ユーザースコープの `~/.agents/AGENTS.md` と、各エージェントへの連携 |
-| `mise-trust` | 指定したディレクトリ配下の mise 設定を信頼する |
+| `mise-trust` | 作業ディレクトリ配下の mise 設定を信頼し、エージェントが `mise trust` で止まらないようにする（自動検出、または `AGENTYARD_MISE_TRUSTED_PATHS` で指定。`$HOME` とその上位は拒否） |
 | `wsl-browser` | WSL: ログイン画面を Windows のブラウザで開く |
 | `apparmor` | Ubuntu 24.04（WSL 以外）: bubblewrap がユーザー名前空間を作れるようにする |
 
@@ -108,6 +110,8 @@ agentyard はエージェントをインストールするだけで、操作は�
 ./install.sh uninstall        # agentyard が書き換えた設定を元に戻す（ツール本体は残す）
 ```
 
+入力が必要なことは、インストールを始める前にすべて聞きます。選択画面で項目を選び、そこから決められないもの（Git の名前とメールアドレス、ホストの状態によって変わる確認）に答えると、あとは止まらずに進みます。
+
 `update` は、mise と agentyard が mise に追加したツール、uv tool、自動更新しないエージェント、agentyard の Brewfile にあるもの（macOS）を更新します。apt のパッケージは `sudo apt update && sudo apt upgrade` で更新してください。
 
 ## 環境変数
@@ -117,7 +121,7 @@ agentyard はエージェントをインストールするだけで、操作は�
 | `AGENTYARD_ASSUME_YES=1`（または `-y`、`CI=true`） | 非対話モード |
 | `AGENTYARD_AGENTS` | 入れるエージェント（既定 `claude,codex,copilot`） |
 | `AGENTYARD_WITH` | opt-in の項目（カンマ区切り、上表参照） |
-| `AGENTYARD_DOCKER_GROUP=1` | 非対話モードで docker グループに追加する |
+| `AGENTYARD_DOCKER_GROUP=1` | `AGENTYARD_WITH=docker-group` と同じ |
 | `AGENTYARD_MISE_TRUSTED_PATHS` | `mise-trust` で信頼するディレクトリ（カンマ区切り） |
 | `AGENTYARD_MACOS_DOCKER` | `docker-desktop`、`orbstack`、`colima` のいずれか |
 | `AGENTYARD_ALLOW_UNSUPPORTED=1` | 非サポートの環境でも続行する |

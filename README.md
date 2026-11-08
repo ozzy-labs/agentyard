@@ -87,12 +87,14 @@ agentyard only installs agents; it never drives them. Each agent asks you to acc
 |---|---|
 | `docker` | Linux: Docker Engine (skipped when Docker Desktop's WSL integration is detected). macOS: Docker Desktop / OrbStack / Colima |
 | `zsh` | zsh + oh-my-zsh (an existing `~/.zshrc` is kept) |
+| `docker-group` | add yourself to the `docker` group: docker without `sudo`, which is root-equivalent and lets an agent with shell access leave its sandbox ([why](https://docs.docker.com/engine/install/linux-postinstall/)) |
+| `zsh-login-shell` | make zsh the login shell |
 | `tmux`, `zellij` | terminal multiplexers |
 | `aws`, `azure`, `gcloud` | cloud CLIs |
 | `ast-grep`, `yq`, `markitdown` (`power` = all three) | agent helper tools |
 | `bun` | Bun runtime |
 | `agents-md` | user-scope `~/.agents/AGENTS.md` wired to every installed agent |
-| `mise-trust` | trust mise configs under directories you choose |
+| `mise-trust` | trust mise configs under your workspace directories, so agents are not stopped by `mise trust` (detected automatically, or set `AGENTYARD_MISE_TRUSTED_PATHS`; `$HOME` and anything above it is refused) |
 | `wsl-browser` | WSL: open login pages in the Windows browser |
 | `apparmor` | Ubuntu 24.04 (non-WSL): let bubblewrap create user namespaces |
 
@@ -108,6 +110,8 @@ Project-specific tools (linters, hooks, language versions, Go / Rust) belong in 
 ./install.sh uninstall        # revert what agentyard wrote (tools are kept)
 ```
 
+Everything agentyard needs from you is asked before the install starts: the selection screen, then the few answers that cannot be derived from it (your Git name and email, and host-specific questions). The install itself then runs without stopping.
+
 `update` upgrades mise and the tools agentyard added to it, uv tools, agents that do not auto-update, and items in agentyard's Brewfile (macOS). Upgrade apt packages with `sudo apt update && sudo apt upgrade`.
 
 ## Environment variables
@@ -117,7 +121,7 @@ Project-specific tools (linters, hooks, language versions, Go / Rust) belong in 
 | `AGENTYARD_ASSUME_YES=1` (or `-y`, `CI=true`) | non-interactive mode |
 | `AGENTYARD_AGENTS` | agents to install (default `claude,codex,copilot`) |
 | `AGENTYARD_WITH` | opt-in items (comma separated, see above) |
-| `AGENTYARD_DOCKER_GROUP=1` | add the user to the `docker` group in non-interactive mode |
+| `AGENTYARD_DOCKER_GROUP=1` | same as `AGENTYARD_WITH=docker-group` |
 | `AGENTYARD_MISE_TRUSTED_PATHS` | directories for `mise-trust` (comma separated) |
 | `AGENTYARD_MACOS_DOCKER` | `docker-desktop`, `orbstack`, or `colima` |
 | `AGENTYARD_ALLOW_UNSUPPORTED=1` | continue on unsupported platforms |

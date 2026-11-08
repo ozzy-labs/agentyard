@@ -85,15 +85,27 @@ EOF
 }
 
 # Common workspace directories under $HOME that actually contain git repos.
+# Depth 2-3 covers both ~/<dir>/<repo> and ~/<dir>/<org>/<repo> layouts.
 _mise_trust_candidates() {
   local d out=""
-  for d in repos src code projects work dev; do
+  for d in github repos src code projects work dev; do
     [ -d "$HOME/$d" ] || continue
-    if find "$HOME/$d" -mindepth 2 -maxdepth 2 -name .git 2>/dev/null | grep -q .; then
+    if find "$HOME/$d" -mindepth 2 -maxdepth 3 -name .git 2>/dev/null | grep -q .; then
       out="${out:+$out,}~/$d"
     fi
   done
   printf '%s' "$out"
+}
+
+# Trusting $HOME (or anything above it) would defeat mise's trust mechanism:
+# every repository cloned later would run its mise.toml unchecked.
+_mise_trust_too_broad() {
+  local p="$1"
+  case "$p" in
+  / | "$HOME") return 0 ;;
+  esac
+  case "$HOME/" in "$p"/*) return 0 ;; esac
+  return 1
 }
 
 # mise: trust config files under the given directories (global config only).
@@ -112,28 +124,24 @@ install_mise_trust() {
       return 0
     fi
   fi
+  # Selecting the item is the consent; the directories come from
+  # AGENTYARD_MISE_TRUSTED_PATHS or from detected workspace directories, so no
+  # question is asked during the run.
   if [ -z "$paths" ]; then
-    if is_non_interactive; then
-      log_warn "AGENTYARD_MISE_TRUSTED_PATHS が未指定のためスキップします"
-      return 0
-    fi
-    log_warn "指定したディレクトリ配下のリポジトリの mise 設定は、確認なしで信頼されます。"
-    local suggested
-    suggested="$(_mise_trust_candidates)"
-    if [ -n "$suggested" ]; then
-      printf '  信頼するディレクトリ（カンマ区切り。Enter で [%s]、- でスキップ）: ' "$suggested"
-      read -r paths || true
-      [ -z "$paths" ] && paths="$suggested"
-      [ "$paths" = "-" ] && return 0
-    else
-      printf '  信頼するディレクトリ（カンマ区切り、空欄でスキップ）: '
-      read -r paths || true
-      [ -n "$paths" ] || return 0
-    fi
+    paths="$(_mise_trust_candidates)"
+  fi
+  if [ -z "$paths" ]; then
+    log_skip "git リポジトリを含む作業ディレクトリを検出できませんでした"
+    log_info "指定する場合: AGENTYARD_MISE_TRUSTED_PATHS=~/github ./install.sh install"
+    return 0
   fi
   local p ok=1 added=""
   for p in $(printf '%s' "$paths" | tr ',' ' '); do
     case "$p" in "~"*) p="$HOME${p#\~}" ;; esac
+    if _mise_trust_too_broad "$p"; then
+      log_warn "$p は広すぎるため信頼しません（作業ディレクトリを指定してください。例: ~/github）"
+      continue
+    fi
     if mise_at_home settings get trusted_config_paths 2>/dev/null | grep -qF "\"$p\""; then
       log_skip "$p は信頼済みです"
       continue

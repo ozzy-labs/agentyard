@@ -19,19 +19,16 @@ configure_git() {
 
   if _git_has user.name && _git_has user.email; then
     log_skip "user.name / user.email は設定済みです"
-  elif is_non_interactive; then
-    log_warn "user.name / user.email が未設定です（git config --global user.name / user.email で設定してください）"
   else
-    local name email
-    if ! _git_has user.name; then
-      printf 'Git のユーザー名（空欄でスキップ）: '
-      read -r name || true
-      [ -n "$name" ] && git config --global user.name "$name" && log_ok "user.name を設定しました"
+    # Answers were collected before the install started (lib/answers.sh).
+    if ! _git_has user.name && [ -n "${ANSWER_GIT_NAME:-}" ]; then
+      git config --global user.name "$ANSWER_GIT_NAME" && log_ok "user.name を設定しました"
     fi
-    if ! _git_has user.email; then
-      printf 'Git のメールアドレス（空欄でスキップ。GitHub の noreply アドレスも使えます）: '
-      read -r email || true
-      [ -n "$email" ] && git config --global user.email "$email" && log_ok "user.email を設定しました"
+    if ! _git_has user.email && [ -n "${ANSWER_GIT_EMAIL:-}" ]; then
+      git config --global user.email "$ANSWER_GIT_EMAIL" && log_ok "user.email を設定しました"
+    fi
+    if ! _git_has user.name || ! _git_has user.email; then
+      log_warn "user.name / user.email が未設定です（git config --global user.name / user.email で設定してください）"
     fi
   fi
 

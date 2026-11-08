@@ -35,3 +35,5 @@ AGENTYARD_TOOLS_FILE="${AGENTYARD_TOOLS_FILE:-$AGENTYARD_ROOT/config/tools.toml}
 . "$AGENTYARD_ROOT/scripts/lib/agents.sh"
 # shellcheck source=agentsmd.sh
 . "$AGENTYARD_ROOT/scripts/lib/agentsmd.sh"
+# shellcheck source=answers.sh
+. "$AGENTYARD_ROOT/scripts/lib/answers.sh"

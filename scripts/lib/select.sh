@@ -34,6 +34,8 @@ yq|tool|0|yq (YAML 版 jq)
 markitdown|tool|0|markitdown (Office 文書などを Markdown に変換)
 bun|tool|0|Bun
 agents-md|setting|1|ユーザースコープの AGENTS.md (~/.agents/AGENTS.md) と各エージェントへの連携
+docker-group|setting|0|docker グループに自分を追加 (sudo なしで docker を使える・実質 root 権限)
+zsh-login-shell|setting|0|ログインシェルを zsh に変更
 mise-trust|setting|0|mise: 指定ディレクトリ配下のリポジトリを自動で信頼する
 wsl-browser|setting|0|WSL: ログイン時に Windows のブラウザを開く
 apparmor|setting|0|Ubuntu 24.04: bwrap 用 AppArmor 対処 (サンドボックスを有効にする)
@@ -44,6 +46,8 @@ EOF
 component_available() {
   case "$1" in
   wsl-browser) [ "$(os_kind)" = "linux" ] && is_wsl ;;
+  # The docker group exists only on Linux; macOS zsh is already the login shell.
+  docker-group | zsh-login-shell) [ "$(os_kind)" = "linux" ] ;;
   apparmor) [ "$(os_kind)" = "linux" ] && apparmor_applicable ;;
   *) return 0 ;;
   esac
@@ -145,6 +149,10 @@ select_resolve_noninteractive() {
   SELECTED=""
   _select_add_list "${AGENTYARD_AGENTS:-$AGENTYARD_DEFAULT_AGENTS}"
   _select_add_list "${AGENTYARD_WITH:-}"
+  # AGENTYARD_DOCKER_GROUP=1 (v0.5.x) selects the docker-group item.
+  if [ "${AGENTYARD_DOCKER_GROUP:-0}" = "1" ]; then
+    select_add docker-group
+  fi
   _select_apply_legacy
   _select_drop_unavailable
 }

@@ -28,7 +28,8 @@ systemd_running() {
 
 _docker_wsl_enable_systemd() {
   log_warn "WSL で systemd が無効です。Docker Engine の起動には systemd が必要です。"
-  if ask_yes_no "/etc/wsl.conf に [boot] systemd=true を追加しますか？" n; then
+  # Answered before the install started (lib/answers.sh).
+  if [ "${ANSWER_WSL_SYSTEMD:-0}" = "1" ]; then
     if grep -q '^\[boot\]' /etc/wsl.conf 2>/dev/null; then
       log_warn "/etc/wsl.conf に既に [boot] セクションがあります。systemd=true を手動で設定してください。"
     else
@@ -64,30 +65,25 @@ _docker_linux() {
     fi
   fi
   state_add component docker
-  _docker_group_consent
 }
 
-_docker_group_consent() {
+# Membership is root-equivalent and lets an agent with shell access escape its
+# sandbox, so it is a separate opt-in item on the selection screen rather than
+# a prompt during the run. The risk is spelled out in the item's label and in
+# the README. https://docs.docker.com/engine/install/linux-postinstall/
+install_docker_group() {
+  log_section "docker グループ"
+  if ! has_cmd docker; then
+    log_skip "docker が見つかりません（Docker も一緒に選んでください）"
+    return 0
+  fi
   if id -nG "$(id -un)" 2>/dev/null | tr ' ' '\n' | grep -qx docker; then
     log_skip "既に docker グループに所属しています"
     return 0
   fi
-  log_warn "docker グループに入ると、実質的に root 権限を持つことになります。"
-  log_warn "エージェントがシェルを使えると、docker 経由でサンドボックスを迂回できます。"
-  log_info "参考: https://docs.docker.com/engine/install/linux-postinstall/"
-  local add=1
-  if is_non_interactive; then
-    [ "${AGENTYARD_DOCKER_GROUP:-0}" = "1" ] || add=0
-  else
-    ask_yes_no "docker グループに $(id -un) を追加しますか（sudo なしで docker を使えるようになります）？" y || add=0
-  fi
-  if [ "$add" = "1" ]; then
-    sudo usermod -aG docker "$(id -un)"
-    state_add setting docker-group "$(id -un)"
-    log_ok "docker グループに追加しました（次回ログインから有効）"
-  else
-    log_skip "docker グループには追加しません（sudo docker で使えます）"
-  fi
+  sudo usermod -aG docker "$(id -un)" || return 1
+  state_add setting docker-group "$(id -un)"
+  log_ok "docker グループに追加しました（次回ログインから有効）"
 }
 
 _docker_macos() {
@@ -95,20 +91,10 @@ _docker_macos() {
     log_skip "docker コマンドは既にあります"
     return 0
   fi
-  local choice="${AGENTYARD_MACOS_DOCKER:-}"
-  if [ -z "$choice" ]; then
-    if is_non_interactive; then
-      choice=colima
-    else
-      printf '  コンテナ環境を選んでください: 1) Docker Desktop  2) OrbStack  3) Colima [3]: '
-      read -r choice || true
-      case "$choice" in
-      1) choice=docker-desktop ;;
-      2) choice=orbstack ;;
-      *) choice=colima ;;
-      esac
-    fi
-  fi
+  # Answered before the install started (lib/answers.sh); colima is the
+  # non-interactive default.
+  local choice="${ANSWER_MACOS_DOCKER:-${AGENTYARD_MACOS_DOCKER:-}}"
+  [ -n "$choice" ] || choice=colima
   case "$choice" in
   docker-desktop) brew_install cask docker-desktop ;;
   orbstack) brew_install cask orbstack ;;

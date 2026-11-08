@@ -59,7 +59,9 @@ Other platforms (Ubuntu 22.04 and older, Debian and other distributions, WSL1, I
 
 Install order of preference: the tool's official method → the OS package manager (apt / Homebrew) → mise.
 
-### Default
+### Always installed
+
+Installed regardless of what you select on the screen.
 
 | Category | Linux | macOS |
 |---|---|---|
@@ -71,13 +73,15 @@ Install order of preference: the tool's official method → the OS package manag
 
 ### AI agents (selectable)
 
-| Agent | Default | Install method |
-|---|---|---|
-| Claude Code | ✓ | official installer |
-| Codex CLI | ✓ | official installer |
-| GitHub Copilot CLI | ✓ | official installer (Copilot subscription required) |
-| Antigravity CLI | opt-in | official installer (18+, supported countries; its terms apply from installation) |
-| Gemini CLI | opt-in | npm package via mise (for Gemini Code Assist customers) |
+All five are opt-in; none is pre-selected.
+
+| Agent | Install method |
+|---|---|
+| Claude Code | official installer |
+| Codex CLI | official installer |
+| GitHub Copilot CLI | official installer (Copilot subscription required) |
+| Antigravity CLI | official installer (18+, supported countries; its terms apply from installation) |
+| Gemini CLI | npm package via mise (for Gemini Code Assist customers) |
 
 agentyard only installs agents; it never drives them. Each agent asks you to accept its terms at the first login, except Antigravity CLI, whose terms apply from installation — which is why its selection label says so. [docs/third-party.md](docs/third-party.md) lists the licence, when the terms apply, the data-collection default, and the commercial conditions for everything agentyard installs, with sources.
 
